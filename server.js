@@ -42,9 +42,9 @@ app.get('/users', (req, res) => {
   });
 });
 
-
-
-
+app.get('/login', (req, res) => { // route GET pour /login
+  res.send('<h1>bienvenue sur la page de login!</h1>'); // envoi d'une réponse HTML
+});
 
 app.post('/register', (req, res) => { // route POST pour /register
   console.log('Données recues pour l\'inscription'); // log dans la console
@@ -65,6 +65,29 @@ app.post('/register', (req, res) => { // route POST pour /register
   );
 });
 
+app.post('/login', (req, res) => { // route POST pour /login
+  console.log('Données recues pour la connexion'); // log dans la console
+  console.log(req.body); // affichage du corps de la requête
+  connection.query(
+    'SELECT * FROM User WHERE login = ? AND password = ?',
+    [req.body.V_log, req.body.V_pass],
+    (err, results) => {
+      if (err) {
+        console.error('Erreur lors de la vérification des identifiants :', err);
+        res.status(500).json({ message: 'Erreur serveur' });
+        return;
+      }
+
+      if (results[0].login==req.body.V_log && results[0].password==req.body.V_pass) {
+        console.log('Connexion réussie pour l\'utilisateur :', results[0].login);
+        res.json({ message: 'Connexion réussie ', userId: results[0].id });
+      } else {
+        console.log('Mot de passe incorrect ou identifiants incorrect');
+        res.status(401).json({ message: 'Identifiants invalides' });
+      }
+    }
+  );
+} );
 
 
 
