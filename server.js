@@ -23,7 +23,8 @@
   app.use(express.static('public')); // servir les fichiers statiques du dossier public
   app.use(express.json()); // middleware pour parser le JSO
 
-
+//=========================================================================================================
+//route pour récupérer les utilisateurs
   app.get('/users', (req, res) => {
     connection.query('SELECT * FROM User', (err, results) => {
       if (err) {
@@ -35,15 +36,48 @@
     });
   });
 
+//=========================================================================================================
   app.get('/login', (req, res) => { // route GET pour /login
     res.send('<h1>bienvenue sur la page de login!</h1>'); // envoi d'une réponse HTML
   });
-
   
+//=========================================================================================================
+// methode post 
+//=========================================================================================================\
 
 
+// route pour les reponses 
+  app.post('/reponse', (req, res) => { // route GET pour /reponse
+    if (req.body.rep==1){
+      connection.query('UPDATE Score SET points = points + 1, winstreak = winstreak + 1 WHERE idUser = ?',
+      [req.body.userId], (err, results) => {
+      if (err) {
+          console.error('Erreur lors de la mise à jour du score :', err);
+          res.status(500).json({ message: 'Erreur serveur' });
+          return;
+        }
+        console.log('score mis à jour avec succès');
+        res.json({ message: 'score mis à jour' });
+      } );
+    }
+    else{
+    connection.query('UPDATE Score SET recordWinstreak = winstreak, winstreak = 0 WHERE idUser = ?',
+    [req.body.userId], (err, results) => {
+      if (err) {
+          console.error('Erreur lors de la mise à jour du score :', err);
+          res.status(500).json({ message: 'Erreur serveur' });
+          return;
+        }
+      }
+    )
+    console.log('mauvaise réponse');
+    res.json({ message: 'mauvaise réponse winstreak perdu' });
+    }   
+  });
 
 
+//=========================================================================================================
+//route d'inscription
   app.post('/register', (req, res) => { // route POST pour /register
     console.log('Données recues pour l\'inscription'); // log dans la console
     console.log(req.body); // affichage du corps de la requête
@@ -72,6 +106,10 @@
         );
   });
   });
+  
+  
+  //=========================================================================================================
+  // route de connexion
   app.post('/login', (req, res) => { // route POST pour /login
     console.log('Données recues pour la connexion'); // log dans la console
     console.log(req.body); // affichage du corps de la requête
@@ -95,8 +133,6 @@
       }
     );
   } );
-
-
 
 
 
