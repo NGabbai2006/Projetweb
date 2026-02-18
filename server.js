@@ -23,8 +23,8 @@
   app.use(express.static('public')); // servir les fichiers statiques du dossier public
   app.use(express.json()); // middleware pour parser le JSO
 
-//=========================================================================================================
-//route pour récupérer les utilisateurs
+  //=========================================================================================================
+  //route pour récupérer les utilisateurs
   app.get('/users', (req, res) => {
     connection.query('SELECT * FROM User', (err, results) => {
       if (err) {
@@ -36,59 +36,75 @@
     });
   });
 
-//=========================================================================================================
+  //=========================================================================================================
   app.get('/login', (req, res) => { // route GET pour /login
     res.send('<h1>bienvenue sur la page de login!</h1>'); // envoi d'une réponse HTML
   });
-  
-//=========================================================================================================
-// methode post 
-//=========================================================================================================\
 
 
-// route pour les reponses 
+  app.get('/Top100', (req, res) => { // route GET pour /scoreTab
+    connection.query('SELECT User.login, Score.points, Score.winstreak FROM Score,User WHERE Score.idUser = User.id ORDER BY points DESC LIMIT 100',
+      (err, results) => {
+        if (err) {
+          console.error('Erreur lors de la récupération du classement :', err);
+          res.status(500).json({ message: 'Erreur serveur' });
+        }
+        res.json(results);
+      });
+  });
+
+  //=========================================================================================================
+  // methode post 
+  //=========================================================================================================\
+
+
+
+
+  // route pour les reponses 
+
   app.post('/reponse', (req, res) => { // route GET pour /reponse
-    if (req.body.rep==1){
-      connection.query('UPDATE Score SET points = points + 1, winstreak = winstreak + 1 WHERE idUser = ?',
-      [req.body.userId], (err, results) => {
-      if (err) {
-          console.error('Erreur lors de la mise à jour du score :', err);
-          res.status(500).json({ message: 'Erreur serveur' });
-          return;
-        }
-        console.log('score mis à jour avec succès');
-        res.json({ message: 'score mis à jour' });
-      } );
+    if (req.body.rep == 1) {
+      connection.query('UPDATE Score SET pointsTemp = pointsTemp + 1, winstreak = winstreak + 1 WHERE idUser = ?',
+        [req.body.userId], (err, results) => {
+          if (err) {
+            console.error('Erreur lors de la mise à jour du score :', err);
+            res.status(500).json({ message: 'Erreur serveur' });
+            return;
+          }
+          console.log('score mis à jour avec succès');
+          res.json({ message: 'score mis à jour' });
+        });
     }
-    else{
-    connection.query('UPDATE Score SET recordWinstreak = winstreak, winstreak = 0 WHERE idUser = ?',
-    [req.body.userId], (err, results) => {
-      if (err) {
-          console.error('Erreur lors de la mise à jour du score :', err);
-          res.status(500).json({ message: 'Erreur serveur' });
-          return;
+    else {
+      connection.query('UPDATE Score SET winstreak = 0 WHERE idUser = ?',
+        [req.body.userId], (err, results) => {
+          if (err) {
+            console.error('Erreur lors de la mise à jour du score :', err);
+            res.status(500).json({ message: 'Erreur serveur' });
+            return;
+          }
         }
-      }
-    )
-    console.log('mauvaise réponse');
-    res.json({ message: 'mauvaise réponse winstreak perdu' });
-    }   
+      )
+      console.log('mauvaise réponse');
+      res.json({ message: 'mauvaise réponse   winstreak perdu' });
+    }
   });
 
 
-//=========================================================================================================
-//route d'inscription
+  //=========================================================================================================
+  //route d'inscription
   app.post('/register', (req, res) => { // route POST pour /register
     console.log('Données recues pour l\'inscription'); // log dans la console
     console.log(req.body); // affichage du corps de la requête
+
     connection.query(
-      'INSERT INTO User (login, password) VALUES (?, ?)',  
+      'INSERT INTO User (login, password) VALUES (?, ?)',
       [req.body.V_log, req.body.V_pass],
       (err, results) => {
         if (err) {
           console.error('Erreur lors de l\'insertion dans la base de données :', err);
           res.status(500).json({ message: 'Erreur serveur' });
-          return;
+
         }
         // ajout de l'user dans la table score car plus simple 
         connection.query(
@@ -98,16 +114,17 @@
             if (err) {
               console.error('Erreur lors de l\'insertion dans la table Score :', err);
               res.status(500).json({ message: 'Erreur serveur lors de l\'insertion du score' });
-              return;
+
             }
             console.log('Insertion réussie, ID utilisateur :', results.insertId);
             res.json({ message: 'Inscription réussie !', userId: results.insertId });
           }
         );
+      });
   });
-  });
-  
-  
+
+
+
   //=========================================================================================================
   // route de connexion
   app.post('/login', (req, res) => { // route POST pour /login
@@ -123,7 +140,7 @@
           return;
         }
 
-        if (results[0].login==req.body.V_log && results[0].password==req.body.V_pass) {
+        if (results[0].login == req.body.V_log && results[0].password == req.body.V_pass) {
           console.log('Connexion réussie pour l\'utilisateur :', results[0].login);
           res.json({ message: 'Connexion réussie ', userId: results[0].id });
         } else {
@@ -132,13 +149,13 @@
         }
       }
     );
-  } );
+  });
 
 
 
-    app.listen(3000, () => { // démarrage du serveur sur le port 3000
-      let monIp = require("ip").address(); // récupération de l'adresse IP locale
-      console.log(`Server running on http://${monIp}:3000`); // log de l'URL du serveur
-    })
+  app.listen(3000, () => { // démarrage du serveur sur le port 3000
+    let monIp = require("ip").address(); // récupération de l'adresse IP locale
+    console.log(`Server running on http://${monIp}:3000`); // log de l'URL du serveur
+  })
 
-    
+
