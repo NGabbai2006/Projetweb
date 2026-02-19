@@ -184,11 +184,11 @@ app.post('/login', (req, res) => { // route POST pour /login
         res.status(500).json({ message: 'Erreur serveur' });
         return;
       }
-      if (results.length === 0) {
+      else if (results.length === 0) {
         res.status(401).json({ message: 'Identifiants invalides' });
         return;
       }
-      if (results[0].login == req.body.V_log && results[0].password == req.body.V_pass) {
+      else if (results[0].login == req.body.V_log && results[0].password == req.body.V_pass) {
         console.log('Connexion réussie pour l\'utilisateur :', results[0].login);
 
         res.json({ message: 'Connexion réussie ', id: results[0].id });
