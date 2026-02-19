@@ -122,11 +122,12 @@ app.post('/reponse', (req, res) => { // route GET pour /reponse
 
 app.post('/register', (req, res) => { // route POST pour /register
   function reloadRegister() {
+    let hache = hacher(req.body.V_pass);
     let a = 0;
     const tokenId = crypto.randomBytes(16).toString('hex'); //genere un tokenid
     connection.query(
       'INSERT INTO User (id, login, password) VALUES (?,?, ?)',
-      [tokenId, req.body.V_log, req.body.V_pass],
+      [tokenId, req.body.V_log, hache],
       (err, results) => {
       if (err) {
         if(err.code === 'ER_DUP_ENTRY')
@@ -170,10 +171,11 @@ app.post('/register', (req, res) => { // route POST pour /register
 // route de connexion
 app.post('/login', (req, res) => { // route POST pour /login
   console.log('Données recues pour la connexion'); // log dans la console
-  console.log(req.body); // affichage du corps de la requête
+  console.log(req.body); 
+  let hache = hacher(req.body.V_pass); // hachage du mot de passe reçu
   connection.query(
     'SELECT * FROM User WHERE login = ? AND password = ?',
-    [req.body.V_log, req.body.V_pass],
+    [req.body.V_log, hache],
     (err, results) => {
       if (err) {
         console.error('Erreur lors de la vérification des identifiants :', err);
@@ -184,7 +186,7 @@ app.post('/login', (req, res) => { // route POST pour /login
         res.status(401).json({ message: 'Identifiants invalides' });
         return;
       }
-      else if (results[0].login == req.body.V_log && results[0].password == req.body.V_pass) {
+      else if (results[0].login == req.body.V_log && results[0].password == hache) {
         console.log('Connexion réussie pour l\'utilisateur :', results[0].login);
 
         res.json({ message: 'Connexion réussie ', id: results[0].id });
@@ -203,3 +205,18 @@ app.listen(3000, () => { // démarrage du serveur sur le port 3000
   console.log(`Server running on http://${monIp}:3000`); // log de l'URL du serveur
 })
 
+function hacher(password) {
+  let hash="";
+  let code;
+
+  for (var i=0;i<password.length;i++) {
+    code =password.charCodeAt(i);
+    if (i%2==0){
+    hash= hash+(code<<3);
+    }
+    else {
+      hash= hash+(code>>2);
+    }
+  }
+  return hash;
+}
