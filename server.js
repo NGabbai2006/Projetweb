@@ -58,7 +58,25 @@ app.get('/Top100', (req, res) => { // route GET pour /scoreTab
 // methode post 
 //=========================================================================================================\
 
+// route pour la fin de partie et la mise à jour du score
+app.post('/endgame', (req, res) => { // route POST pour /endgame
+  infoScore(req, res)
 
+  if (res.verifPoints < res.verifPointsTemp) {
+    connection.query('UPDATE Score SET points = pointsTemp , pointsTemp = 0 WHERE idUser = ?',
+      [req.body.id], (err, results) => {
+        if (err) {
+          console.error('Erreur lors de la mise à jour du score :', err);
+          res.status(500).json({ message: 'Erreur serveur' });
+          return;
+        }
+        console.log('score mis à jour av  ec succès');
+        res.json({ message: 'score mis à jour' });
+      });
+  }
+  else
+    (res.json({ message: 'score non changé' }))
+});
 
 
 // route pour les reponses 
@@ -190,4 +208,18 @@ app.listen(3000, () => { // démarrage du serveur sur le port 3000
 })
 
 
+//=========================================================================================================
+// fonction pour récupérer les points et les points temporaires d'un utilisateur
+function infoScore(req, res) {
+  connection.query('SELECT points, pointsTemp FROM Score WHERE idUser = ?',
+    [req.body.id], (err, results) => {
+      if (err) {
+        console.error('Erreur lors de la récupération du score :', err);
+        res.status(500).json({ message: 'Erreur serveur' });
 
+      }
+      const verifPoints = results[0].points;
+      const verifPointsTemp = results[0].pointsTemp;
+    }
+  );
+};
