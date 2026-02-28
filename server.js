@@ -54,22 +54,51 @@ app.get('/Top100', (req, res) => { // route GET pour /scoreTab
     });
 });
 
+
 //=========================================================================================================
 // methode post 
 //=========================================================================================================\
 
+app.post('/startgame', (req, res) => { // route POST pour /startgame
+        connection.query('UPDATE Score SET pointsTemp = 0, winstreakTemp = 0 WHERE idUser = ?',
+          [req.body.id], (err, results) => {
+            if (err) {
+              console.error('Erreur lors de la réinitialisation du scoreTemp et winstreakTemp :', err);
+              res.status(500).json({ message: 'Erreur serveur' });
+              return;
+            }
+            console.log('scoreTemp et winstreakTemp réinitialisés avec succès');
+            res.json({ message: 'reinitialisation effectuée' });
+          });
+
+      }
+);
+
+
+
 // route pour la fin de partie et la mise à jour du score
 app.post('/endgame', (req, res) => { // route POST pour /endgame
-
-  connection.query('SELECT points, pointsTemp FROM Score WHERE idUser = ?',
+  connection.query('SELECT points, pointsTemp, winstreakTemp, winstreak FROM Score WHERE idUser = ?',
     [req.body.id], (err, results) => {
       if (err) {
         console.error('Erreur lors de la récupération du score :', err);
         res.status(500).json({ message: 'Erreur serveur' });
 
       }
+      if (results[0].points < results[0].pointsTemp && results[0].winstreak < results[0].winstreakTemp) {
+        connection.query('UPDATE Score SET points = pointsTemp, pointsTemp=0, winstreak = winstreakTemp , winstreakTemp = 0 WHERE idUser = ?',
+          [req.body.id], (err, results) => {
+            if (err) {
+              console.error('Erreur lors de la mise à jour du winstreak et du score :', err);
+              res.status(500).json({ message: 'Erreur serveur' });
+              return;
+            }
+            console.log('winstreak mis à jour avec succès');
+            res.json({ message: 'score et winstreak mis à jour' });
+          });
+      }
 
-      if (results[0].points < results[0].pointsTemp) {
+      else if (results[0].points < results[0].pointsTemp) {
         connection.query('UPDATE Score SET points = pointsTemp , pointsTemp = 0 WHERE idUser = ?',
           [req.body.id], (err, results) => {
             if (err) {
@@ -77,20 +106,36 @@ app.post('/endgame', (req, res) => { // route POST pour /endgame
               res.status(500).json({ message: 'Erreur serveur' });
               return;
             }
-            console.log('score mis à jour av  ec succès');
+            console.log('score mis à jour avec succès');
             res.json({ message: 'score mis à jour' });
-          });
+          })
       }
-      else
-        (res.json({ message: 'score non changé' }))
+      else if (results[0].winstreak < results[0].winstreakTemp) {
+        connection.query('UPDATE Score SET winstreak = winstreakTemp , winstreakTemp = 0 WHERE idUser = ?',
+          [req.body.id], (err, results) => {
+            if (err) {
+              console.error('Erreur lors de la mise à jour du winstreak :', err);
+              res.status(500).json({ message: 'Erreur serveur' });
+              return;
+            }
+            console.log('winstreak mis à jour avec succès');
+            res.json({ message: 'winstreak mis à jour' });
+
+          })
+      }
+        else {
+          res.json({ message: 'score et winstreak non mis à jour' });
+        }
     });
 });
+
+
 
 // route pour les reponses 
 
 app.post('/reponse', (req, res) => { // route GET pour /reponse
   if (req.body.rep == 1) {
-    connection.query('UPDATE Score SET pointsTemp = pointsTemp + 1, winstreak = winstreak + 1 WHERE idUser = ?',
+    connection.query('UPDATE Score SET pointsTemp = pointsTemp + 1, winstreakTemp = winstreakTemp + 1 WHERE idUser = ?',
       [req.body.id], (err, results) => {
         if (err) {
           console.error('Erreur lors de la mise à jour du score :', err);
@@ -129,17 +174,16 @@ app.post('/register', (req, res) => { // route POST pour /register
       'INSERT INTO User (id, login, password) VALUES (?,?, ?)',
       [tokenId, req.body.V_log, hache],
       (err, results) => {
-      if (err) {
-        if(err.code === 'ER_DUP_ENTRY')
-        {
-          console.error('Erreur : token en double, génération d\'un nouveau tokenId');
-          return reloadRegister();
+        if (err) {
+          if (err.code === 'ER_DUP_ENTRY') {
+            console.error('Erreur : token en double, génération d\'un nouveau tokenId');
+            return reloadRegister();
+          }
+          else {
+            console.error('erreur lors de de l\'inscription :', err);
+            res.status(500).json({ message: 'Erreur serveur lors de l\'inscription' });
+          }
         }
-        else{
-          console.error('erreur lors de de l\'inscription :', err);
-          res.status(500).json({ message: 'Erreur serveur lors de l\'inscription' });
-        }
-      }
         else {
           // ajout de l'user dans la table score car plus simple 
           connection.query(
@@ -163,15 +207,22 @@ app.post('/register', (req, res) => { // route POST pour /register
 });
 
 
-
-
-
+app.post('/quizz', (req, res) => { // route POST pour /quizz
+  connection.query('SELECT * FROM Quizz', (err, results) => {
+    if (err) {
+      console.error('Erreur lors de la récupération du quizz :', err);
+      res.status(500).json({ message: 'Erreur serveur' });
+      return;
+    }
+    res.json({ question: results[Math.random() * results.length] });
+  });
+});
 
 //=========================================================================================================
 // route de connexion
 app.post('/login', (req, res) => { // route POST pour /login
   console.log('Données recues pour la connexion'); // log dans la console
-  console.log(req.body); 
+  console.log(req.body);
   let hache = hacher(req.body.V_pass); // hachage du mot de passe reçu
   connection.query(
     'SELECT * FROM User WHERE login = ? AND password = ?',
@@ -182,15 +233,21 @@ app.post('/login', (req, res) => { // route POST pour /login
         res.status(500).json({ message: 'Erreur serveur' });
         return;
       }
+
+
       else if (results.length === 0) {
         res.status(401).json({ message: 'Identifiants invalides' });
         return;
       }
+
+
       else if (results[0].login == req.body.V_log && results[0].password == hache) {
         console.log('Connexion réussie pour l\'utilisateur :', results[0].login);
 
         res.json({ message: 'Connexion réussie ', id: results[0].id });
-      } else {
+      }
+
+      else {
         console.log('Mot de passe incorrect ou identifiants incorrect');
         res.status(401).json({ message: 'Identifiants invalides' });
       }
@@ -206,17 +263,32 @@ app.listen(3000, () => { // démarrage du serveur sur le port 3000
 })
 
 function hacher(password) {
-  let hash="";
+  let hash = "";
   let code;
 
-  for (var i=0;i<password.length;i++) {
-    code =password.charCodeAt(i);
-    if (i%2==0){
-    hash= hash+(code<<3);
+  for (var i = 0; i < password.length; i++) {
+    code = password.charCodeAt(i);
+    if (i % 2 == 0) {
+      hash = hash + (code << 3);
     }
     else {
-      hash= hash+(code>>2);
+      hash = hash + (code >> 2);
     }
   }
   return hash;
 }
+
+
+async function verif(verifP, verifW) {
+  if (verifP == 1 && verifW == 1) {
+    res.json({ message: 'score et winstreak mis à jour' });
+  }
+  else if (verifP == 1) {
+    res.json({ message: 'score mis à jour' });
+  }
+  else if (verifW == 1) {
+    res.json({ message: 'winstreak mis à jour' });
+  }
+}
+
+
