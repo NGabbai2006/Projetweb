@@ -157,7 +157,7 @@ app.post('/reponse', (req, res) => { // route GET pour /reponse
       }
     )
     console.log('mauvaise réponse');
-    res.json({ message: 'mauvaise réponse   winstreak perdu' });
+    res.json({ message: 'mauvaise réponse  winstreak perdu' });
   }
 });
 
@@ -279,16 +279,5 @@ function hacher(password) {
 }
 
 
-async function verif(verifP, verifW) {
-  if (verifP == 1 && verifW == 1) {
-    res.json({ message: 'score et winstreak mis à jour' });
-  }
-  else if (verifP == 1) {
-    res.json({ message: 'score mis à jour' });
-  }
-  else if (verifW == 1) {
-    res.json({ message: 'winstreak mis à jour' });
-  }
-}
 
 
