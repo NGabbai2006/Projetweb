@@ -134,7 +134,14 @@ app.post('/endgame', (req, res) => { // route POST pour /endgame
 // route pour les reponses 
 
 app.post('/reponse', (req, res) => { // route GET pour /reponse
-  if (req.body.rep == 1) {
+  connection.query('SELECT reponse FROM Quizz WHERE id = ?',
+    [req.body.idQuizz], (err, results) => {
+      if (err) {
+        console.error('Erreur lors de la récupération de la réponse :', err);
+        res.status(500).json({ message: 'Erreur serveur' });
+        return;
+      }
+      if (results[0].reponse == req.body.reponse) {
     connection.query('UPDATE Score SET pointsTemp = pointsTemp + 1, winstreakTemp = winstreakTemp + 1 WHERE idUser = ?',
       [req.body.id], (err, results) => {
         if (err) {
@@ -147,7 +154,7 @@ app.post('/reponse', (req, res) => { // route GET pour /reponse
       });
   }
   else {
-    connection.query('UPDATE Score SET winstreak = 0 WHERE idUser = ?',
+    connection.query('UPDATE Score SET winstreakTemp = 0 WHERE idUser = ?',
       [req.body.id], (err, results) => {
         if (err) {
           console.error('Erreur lors de la mise à jour du score :', err);
@@ -160,7 +167,7 @@ app.post('/reponse', (req, res) => { // route GET pour /reponse
     res.json({ message: 'mauvaise réponse  winstreak perdu' });
   }
 });
-
+});
 
 //=========================================================================================================
 //route d'inscription
@@ -208,13 +215,17 @@ app.post('/register', (req, res) => { // route POST pour /register
 
 
 app.post('/quizz', (req, res) => { // route POST pour /quizz
-  connection.query('SELECT * FROM Quizz', (err, results) => {
+  let randomImage=0;
+  connection.query('SELECT nom,chemin,id FROM Quizz', (err, results) => {
     if (err) {
       console.error('Erreur lors de la récupération du quizz :', err);
       res.status(500).json({ message: 'Erreur serveur' });
       return;
     }
-    res.json({ question: results[Math.random() * results.length] });
+      randomImage = Math.floor(Math.random() * results.length);
+    
+
+    res.json({ question: results[randomImage] });
   });
 });
 
