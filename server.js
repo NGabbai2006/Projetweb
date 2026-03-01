@@ -20,28 +20,11 @@ connection.connect((err) => {
 });
 
 app.use(express.json());
-app.use(express.static('public')); // servir les fichiers statiques du dossier public
+app.use(express.static('public')); 
 
 
 
 //=========================================================================================================
-//route pour récupérer les utilisateurs
-app.get('/users', (req, res) => {
-  connection.query('SELECT * FROM User', (err, results) => {
-    if (err) {
-      console.error('Erreur lors de la récupération des utilisateurs :', err);
-      res.status(500).json({ message: 'Erreur serveur' });
-      return;
-    }
-    res.json(results);
-  });
-});
-
-//=========================================================================================================
-app.get('/login', (req, res) => { // route GET pour /login
-  res.send('<h1>bienvenue sur la page de login!</h1>'); // envoi d'une réponse HTML
-});
-
 
 app.get('/Top100', (req, res) => { // route GET pour /scoreTab
   connection.query('SELECT User.login, Score.points, Score.winstreak FROM Score,User WHERE Score.idUser = User.id ORDER BY points DESC LIMIT 100',
@@ -54,6 +37,22 @@ app.get('/Top100', (req, res) => { // route GET pour /scoreTab
     });
 });
 
+
+//=========================================================================================================
+app.get('/quizz', (req, res) => { // route POST pour /quizz
+  let randomImage=0;
+  connection.query('SELECT nom,chemin,id FROM Quizz', (err, results) => {
+    if (err) {
+      console.error('Erreur lors de la récupération du quizz :', err);
+      res.status(500).json({ message: 'Erreur serveur' });
+      return;
+    }
+      randomImage = Math.floor(Math.random() * results.length);
+    
+
+    res.json({ question: results[randomImage] });
+  });
+});
 
 //=========================================================================================================
 // methode post 
@@ -75,7 +74,7 @@ app.post('/startgame', (req, res) => { // route POST pour /startgame
 );
 
 
-
+//=========================================================================================================
 // route pour la fin de partie et la mise à jour du score
 app.post('/endgame', (req, res) => { // route POST pour /endgame
   connection.query('SELECT points, pointsTemp, winstreakTemp, winstreak FROM Score WHERE idUser = ?',
@@ -130,7 +129,7 @@ app.post('/endgame', (req, res) => { // route POST pour /endgame
 });
 
 
-
+//=========================================================================================================
 // route pour les reponses 
 
 app.post('/reponse', (req, res) => { // route GET pour /reponse
@@ -214,20 +213,7 @@ app.post('/register', (req, res) => { // route POST pour /register
 });
 
 
-app.post('/quizz', (req, res) => { // route POST pour /quizz
-  let randomImage=0;
-  connection.query('SELECT nom,chemin,id FROM Quizz', (err, results) => {
-    if (err) {
-      console.error('Erreur lors de la récupération du quizz :', err);
-      res.status(500).json({ message: 'Erreur serveur' });
-      return;
-    }
-      randomImage = Math.floor(Math.random() * results.length);
-    
 
-    res.json({ question: results[randomImage] });
-  });
-});
 
 //=========================================================================================================
 // route de connexion
@@ -254,7 +240,7 @@ app.post('/login', (req, res) => { // route POST pour /login
 
       else if (results[0].login == req.body.V_log && results[0].password == hache) {
         console.log('Connexion réussie pour l\'utilisateur :', results[0].login);
-
+        
         res.json({ message: 'Connexion réussie ', id: results[0].id });
       }
 
@@ -267,11 +253,13 @@ app.post('/login', (req, res) => { // route POST pour /login
 });
 
 
-
+//=========================================================================================================
 app.listen(3000, () => { // démarrage du serveur sur le port 3000
   let monIp = require("ip").address(); // récupération de l'adresse IP locale
   console.log(`Server running on http://${monIp}:3000`); // log de l'URL du serveur
 })
+
+//=========================================================================================================
 
 function hacher(password) {
   let hash = "";
