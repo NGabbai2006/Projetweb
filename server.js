@@ -5,7 +5,7 @@ const mysql = require('mysql2');
 const crypto = require('crypto');
 
 const connection = mysql.createConnection({ // configuration de la connexion à la base de données
-  host: '192.168.1.77', //change ton ip 
+  host: '192.168.1.124', //change ton ip 
   user: 'Userweb',
   password: 'Userweb',
   database: 'ProjetWeb'
@@ -254,9 +254,9 @@ app.post('/login', (req, res) => { // route POST pour /login
 
 
 //=========================================================================================================
-app.listen(3000, () => { // démarrage du serveur sur le port 3000
+app.listen(2000, () => { // démarrage du serveur sur le port 2000
   let monIp = require("ip").address(); // récupération de l'adresse IP locale
-  console.log(`Server running on http://${monIp}:3000`); // log de l'URL du serveur
+  console.log(`Server running on http://${monIp}:2000`); // log de l'URL du serveur
 })
 
 //=========================================================================================================
