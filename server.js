@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 
 const connection = mysql.createConnection({ // configuration de la connexion à la base de données
-  host: '192.168.16.241', //change ton ip 
+  host: '172.29.16.241', //change ton ip 
   user: 'Userweb',
   password: 'Userweb',
   database: 'ProjetWeb'
@@ -130,7 +130,7 @@ app.post('/reponse', (req, res) => { // route GET pour /reponse
       if (results[0].reponse == req.body.reponse) {
     connection.query('UPDATE Score SET pointsTemp = pointsTemp + 1 WHERE idUser = ?',
       [req.body.id], (err, results) => {
-        if (err) {
+        if (err) {w
           console.error('Erreur lors de la mise à jour du score :', err);
           res.status(500).json({ message: 'Erreur serveur' });
           return;
@@ -162,7 +162,7 @@ app.post('/register', (req, res) => { // route POST pour /register
   
   async function reloadRegister() {
     
-    let hache = await bcrypt.hash(req.body.V_pass, 15);
+    let hache = await bcrypt.hash(req.body.V_pass, 10);
     const tokenId = crypto.randomBytes(16).toString('hex'); //genere un tokenid
     connection.query(
       'INSERT INTO User (id, login, password) VALUES (?,?, ?)',
