@@ -226,3 +226,50 @@ function repondre(valeurReponse) {
 
 btnOui.addEventListener('click', function() { repondre(1); });
 btnNon.addEventListener('click', function() { repondre(0); });
+
+
+// chargement du classement depuis GET /Top100
+function chargerClassement() {
+  const contenu = document.getElementById('leaderboardContenu');
+
+  fetch('/Top100')
+  .then(function(reponse) { return reponse.json(); })
+  .then(function(donnees) {
+    contenu.innerHTML = '';
+
+    donnees.forEach(function(joueur) {
+      const tr = document.createElement('tr');
+
+      const tdRang = document.createElement('td');
+      tdRang.className = 'leaderboard-rang';
+      tdRang.innerText = donnees.indexOf(joueur) + 1;
+      tr.appendChild(tdRang);
+
+      const tdNom = document.createElement('td');
+      tdNom.className = 'leaderboard-nom';
+      tdNom.innerText = joueur.login;
+      tr.appendChild(tdNom);
+
+      const tdPoints = document.createElement('td');
+      tdPoints.className = 'leaderboard-points';
+      tdPoints.innerText = joueur.points;
+      tr.appendChild(tdPoints);
+
+      contenu.appendChild(tr);
+    });
+  });
+}
+
+
+// ouverture / fermeture du panneau classement
+leaderboardToggle.addEventListener('click', function() {
+  if (classementOuvert == false) {
+    classementOuvert = true;
+    document.getElementById('leaderboard').style.transform = 'translateX(0)';
+    leaderboardToggle.style.right = '260px';
+  } else {
+    classementOuvert = false;
+    document.getElementById('leaderboard').style.transform = 'translateX(100%)';
+    leaderboardToggle.style.right = '0';
+  }
+});
