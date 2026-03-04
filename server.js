@@ -5,7 +5,7 @@ const mysql = require('mysql2');
 const crypto = require('crypto');
 
 const connection = mysql.createConnection({ // configuration de la connexion à la base de données
-  host: '192.168.1.124', //change ton ip 
+  host: '172.29.18.129', //change ton ip 
   user: 'Userweb',
   password: 'Userweb',
   database: 'ProjetWeb'
