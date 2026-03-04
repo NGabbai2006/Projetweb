@@ -184,6 +184,10 @@ app.post('/register', (req, res) => { // route POST pour /register
             res.status(500).json({ message: 'Erreur serveur lors de l\'inscription' });
           }
         }
+        else if (results.length === 0) {
+          res.json({ message: 'Merci d\'enregistrer vos identifiants' });
+          return;
+        }
         else {
           // ajout de l'user dans la table score car plus simple 
           connection.query(
@@ -229,7 +233,7 @@ app.post('/login', (req, res) => { // route POST pour /login
           
       
       else if (results.length === 0) {
-        res.status(401).json({ message: 'Identifiants invalides' });
+        res.json({ message: 'Identifiants invalides' });
         return;
       }
 
@@ -242,7 +246,7 @@ app.post('/login', (req, res) => { // route POST pour /login
 
       else {
         console.log('Mot de passe incorrect ou identifiants incorrect');
-        res.status(401).json({ message: 'Identifiants invalides' });
+        res.json({ message: 'Identifiants invalides' });
       }
     }
   attHache();
