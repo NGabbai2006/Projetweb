@@ -75,18 +75,18 @@
         <button class="play-btn" id="btnJouer">▶ JOUER</button>
       </div>
 
+      <!-- écran de fin de partie -->
+      <div id="finScreen">
+        <div class="fin-titre">PARTIE TERMINÉE</div>
+        <div class="fin-score">Votre score : <span id="scoreFinal">0</span></div>
+        <button class="play-btn" id="btnRejouer">▶ REJOUER</button>
+      </div>
+
       <!-- écran de jeu avec les cartes -->
       <div id="cardScreen">
 
-        <div class="score-bar">
-          <div class="score-item">
-            <div class="score-number correct" id="scoreCorrect">0</div>
-            <div class="score-label">CORRECTS</div>
-          </div>
-          <div class="score-item">
-            <div class="score-number wrong" id="scoreWrong">0</div>
-            <div class="score-label">ERREURS</div>
-          </div>
+        <div id="scoreBar">
+          SCORE : <span id="scoreActuel">0</span>
         </div>
 
         <div class="round-info" id="roundInfo">DOSSIER N°1</div>
@@ -103,8 +103,8 @@
         </div>
 
         <div class="answer-buttons">
-          <button class="ans-btn yes" id="btnOui">✗ MENTIONNÉ</button>
           <button class="ans-btn no" id="btnNon">✓ ABSENT</button>
+          <button class="ans-btn yes" id="btnOui">✗ MENTIONNÉ</button>
         </div>
 
         <div id="resultFeedback"></div>
@@ -120,8 +120,7 @@
     <table id="leaderboardContenu"></table>
   </div>
   <button class="leaderboard-toggle" id="leaderboardToggle">CLASSEMENT</button>
-
+  
 </body>
-  <script src="front.js"></script>
-
+    <script src="front.js"></script>
 </html>
