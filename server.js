@@ -170,7 +170,7 @@ app.post('/reponse', (req, res) => { // route GET pour /reponse
 
 //=========================================================================================================
 //route d'inscription
-
+//tokenid n'est pas vraiment un token juste un id dure a trouver
 app.post('/register', (req, res) => { // route POST pour /register
   function reloadRegister() {
     let hache = hacher(req.body.V_pass);
@@ -182,8 +182,14 @@ app.post('/register', (req, res) => { // route POST pour /register
       (err, results) => {
         if (err) {
           if (err.code === 'ER_DUP_ENTRY') {
-            console.error('Erreur : token en double, génération d\'un nouveau tokenId');
-            return reloadRegister();
+            if (err.message.includes('PRIMARY')) {
+              console.error('Erreur : tokenId en double, génération d\'un nouveau tokenId');
+              return reloadRegister();
+            }
+            else{
+            console.error('Erreur: login déjà utilisé :', err);
+            return res.status(400).json({ message: 'Login déjà utilisé' });
+            }
           }
           else {
             console.error('erreur lors de de l\'inscription :', err);
