@@ -69,10 +69,16 @@
 
       <!-- écran d'accueil avec le bouton jouer -->
       <div id="startScreen">
-        <div class="game-label">DOSSIER CLASSIFIÉ · NIVEAU : CONFIDENTIEL</div>
-        <div class="big-title">QUI EST<br>DANS LES <span class="accent">FICHIERS</span> ?</div>
-        <div class="tagline">IDENTIFIEZ LES PERSONNALITÉS MENTIONNÉES</div>
-        <button class="play-btn" id="btnJouer">▶ JOUER</button>
+        <div class="start-wrapper">
+          <img class="epstein-gauche" src="images/Epstein_bg1.png" alt="" />
+          <div class="start-contenu">
+            <div class="game-label">DOSSIER CLASSIFIÉ · NIVEAU : CONFIDENTIEL</div>
+            <div class="big-title">QUI EST<br>DANS LES <span class="accent">FICHIERS</span> ?</div>
+            <div class="tagline">IDENTIFIEZ LES PERSONNALITÉS MENTIONNÉES</div>
+            <button class="play-btn" id="btnJouer">▶ JOUER</button>
+          </div>
+          <img class="epstein-droite" src="images/Epstein_bg1.png" alt="" />
+        </div>
       </div>
 
       <!-- écran de fin de partie -->
@@ -120,7 +126,7 @@
     <table id="leaderboardContenu"></table>
   </div>
   <button class="leaderboard-toggle" id="leaderboardToggle">CLASSEMENT</button>
-  
+
 </body>
     <script src="front.js"></script>
 </html>

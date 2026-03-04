@@ -34,7 +34,15 @@ body::before {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
   pointer-events: none;
   z-index: 9999;
-  opacity: 0.4;
+  animation: scintille 3s ease-in-out infinite;
+}
+
+@keyframes scintille {
+  0%   { opacity: 0.3; }
+  25%  { opacity: 0.5; }
+  50%  { opacity: 0.25; }
+  75%  { opacity: 0.45; }
+  100% { opacity: 0.3; }
 }
 
 /* pop-up d'authentification */
@@ -275,6 +283,35 @@ header {
 /* écran d'accueil */
 #startScreen {
   text-align: center;
+  width: 100%;
+}
+
+.start-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+}
+
+.start-contenu {
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.epstein-gauche,
+.epstein-droite {
+  width: 280px;
+  max-width: 20vw;
+  object-fit: cover;
+  object-position: top;
+  opacity: 0.18;
+  filter: grayscale(100%);
+  mask-image: linear-gradient(to top, transparent 0%, black 40%);
+  -webkit-mask-image: linear-gradient(to top, transparent 0%, black 40%);
+}
+
+.epstein-droite {
+  transform: scaleX(-1);
 }
 
 .big-title {
