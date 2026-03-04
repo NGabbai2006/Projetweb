@@ -3,9 +3,10 @@ const express = require('express'); // importation d'express
 const app = express(); // création de l'application express
 const mysql = require('mysql2');
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 
 const connection = mysql.createConnection({ // configuration de la connexion à la base de données
-  host: '192.168.1.124', //change ton ip 
+  host: '172.29.16.241', //change ton ip 
   user: 'Userweb',
   password: 'Userweb',
   database: 'ProjetWeb'
@@ -172,9 +173,10 @@ app.post('/reponse', (req, res) => { // route GET pour /reponse
 //route d'inscription
 //tokenid n'est pas vraiment un token juste un id dure a trouver
 app.post('/register', (req, res) => { // route POST pour /register
-  function reloadRegister() {
-    let hache = hacher(req.body.V_pass);
-    let a = 0;
+  
+  async function reloadRegister() {
+    
+    let hache = await bcrypt.hash(req.body.V_pass, 15);
     const tokenId = crypto.randomBytes(16).toString('hex'); //genere un tokenid
     connection.query(
       'INSERT INTO User (id, login, password) VALUES (?,?, ?)',
@@ -226,25 +228,27 @@ app.post('/register', (req, res) => { // route POST pour /register
 app.post('/login', (req, res) => { // route POST pour /login
   console.log('Données recues pour la connexion'); // log dans la console
   console.log(req.body);
-  let hache = hacher(req.body.V_pass); // hachage du mot de passe reçu
+  
   connection.query(
-    'SELECT * FROM User WHERE login = ? AND password = ?',
-    [req.body.V_log, hache],
+    'SELECT * FROM User WHERE login = ?',
+    [req.body.V_log],
     (err, results) => {
+      async function attHache() {
+      let hache = await bcrypt.compare(req.body.V_pass, results[0].password);
       if (err) {
         console.error('Erreur lors de la vérification des identifiants :', err);
         res.status(500).json({ message: 'Erreur serveur' });
         return;
-      }
-
-
+      }      
+          
+      
       else if (results.length === 0) {
         res.status(401).json({ message: 'Identifiants invalides' });
         return;
       }
 
 
-      else if (results[0].login == req.body.V_log && results[0].password == hache) {
+      else if (hache) {
         console.log('Connexion réussie pour l\'utilisateur :', results[0].login);
         
         res.json({ message: 'Connexion réussie ', id: results[0].id });
@@ -255,7 +259,8 @@ app.post('/login', (req, res) => { // route POST pour /login
         res.status(401).json({ message: 'Identifiants invalides' });
       }
     }
-  );
+  attHache();
+    });
 });
 
 
@@ -265,23 +270,6 @@ app.listen(2000, () => { // démarrage du serveur sur le port 2000
   console.log(`Server running on http://${monIp}:2000`); // log de l'URL du serveur
 })
 
-//=========================================================================================================
-
-function hacher(password) {
-  let hash = "";
-  let code;
-
-  for (var i = 0; i < password.length; i++) {
-    code = password.charCodeAt(i);
-    if (i % 2 == 0) {
-      hash = hash + (code << 3);
-    }
-    else {
-      hash = hash + (code >> 2);
-    }
-  }
-  return hash;
-}
 
 
 
