@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EPSTEIN FILES — Qui est impliqué ?</title>
   <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="main.css" />
 </head>
 <body>
 
@@ -32,7 +32,7 @@
         </div>
         <div>
           <label class="field-label">MOT DE PASSE</label>
-          <input class="auth-input" id="loginPass" type="password" placeholder="••••••••" />
+          <input class="auth-input" id="loginPass" type="text" placeholder="mot de passe" />
         </div>
         <button class="auth-btn" id="btnConnexion">ENTRER</button>
         <div class="auth-msg" id="loginMsg"></div>
@@ -46,7 +46,7 @@
         </div>
         <div>
           <label class="field-label">MOT DE PASSE</label>
-          <input class="auth-input" id="regPass" type="password" placeholder="••••••••" />
+          <input class="auth-input" id="regPass" type="text" placeholder="mot de passe" />
         </div>
         <button class="auth-btn" id="btnInscription">CRÉER MON ACCÈS</button>
         <div class="auth-msg" id="registerMsg"></div>
@@ -117,10 +117,10 @@
   <!-- panneau classement -->
   <div class="leaderboard" id="leaderboard">
     <div class="leaderboard-titre">CLASSEMENT</div>
-    <div id="leaderboardContenu"></div>
+    <table id="leaderboardContenu"></table>
   </div>
   <button class="leaderboard-toggle" id="leaderboardToggle">CLASSEMENT</button>
-
-  <script src="main.js"></script>
+  
 </body>
+<script src="main.js"></script>
 </html>

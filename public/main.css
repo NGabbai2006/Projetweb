@@ -516,12 +516,17 @@ header {
   padding-bottom: 12px;
 }
 
-.leaderboard-ligne {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 0;
+#leaderboardContenu {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#leaderboardContenu tr {
   border-bottom: 1px solid #1a1a1a;
+}
+
+#leaderboardContenu td {
+  padding: 8px 4px;
   font-size: 13px;
 }
 
@@ -533,13 +538,14 @@ header {
 }
 
 .leaderboard-nom {
-  flex: 1;
   color: var(--cream);
+  padding-left: 10px;
 }
 
 .leaderboard-points {
   color: var(--gold);
   font-weight: bold;
+  text-align: right;
 }
 
 /* bouton pour ouvrir le classement */
