@@ -1,4 +1,3 @@
-
 const express = require('express'); // importation d'express
 const app = express(); // création de l'application express
 const mysql = require('mysql2');
@@ -6,7 +5,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 
 const connection = mysql.createConnection({ // configuration de la connexion à la base de données
-  host: '172.29.16.241', //change ton ip 
+  host: '192.168.16.241', //change ton ip 
   user: 'Userweb',
   password: 'Userweb',
   database: 'ProjetWeb'

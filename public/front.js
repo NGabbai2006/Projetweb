@@ -1,34 +1,80 @@
-const monInput = document.getElementById('monInput'); // Récupération de l'élément input
-const monInput2 = document.getElementById('monInput2'); // Récupération du deuxième élément input
-const monBouton = document.getElementById('monBouton'); // Récupération de l'élément bouton
+// variables globales
+let pseudoConnecte = null;
+let idConnecte = null;
+let personnaliteActuelle = null;
+let scoreOk = 0;
+let scoreErreur = 0;
+let numeroRound = 1;
+let classementOuvert = false;
 
-monBouton.addEventListener('click', () => { // Ajout d'un écouteur d'événement au bouton
-    fetch('/register', { // Requête POST vers /register
-        method: 'POST', // Méthode POST
-        headers: { // En-têtes de la requête
-            'Content-Type': 'application/json' // Indication que le corps de la requête est en JSON
-        },
-        body: JSON.stringify({ V_log: monInput.value, V_pass: monInput2.value }) // Corps de la requête avec la valeur de l'input convertie en JSON
-    })
-        .then(response => response.json()) // Conversion de la réponse en JSON
-        .then(data => { // Traitement de la réponse JSON
-            alert(data.message); // Affichage d'une alerte avec la réponse
-        });
+// récupération des éléments du DOM
+const btnConnexion = document.getElementById('btnConnexion');
+const btnInscription = document.getElementById('btnInscription');
+const btnDeconnexion = document.getElementById('btnDeconnexion');
+const btnJouer = document.getElementById('btnJouer');
+const btnOui = document.getElementById('btnOui');
+const btnNon = document.getElementById('btnNon');
+const leaderboardToggle = document.getElementById('leaderboardToggle');
+
+
+// envoi du formulaire d'inscription vers POST /register
+btnInscription.addEventListener('click', function() {
+  const pseudo = document.getElementById('regUser').value;
+  const motDePasse = document.getElementById('regPass').value;
+  const zoneMessage = document.getElementById('registerMsg');
+
+  fetch('/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ V_log: pseudo, V_pass: motDePasse })
+  })
+  .then(function(reponse) { return reponse.json(); })
+  .then(function(donnees) {
+    zoneMessage.textContent = donnees.message;
+  });
 });
 
-window.onload = () => {
-    fetch('/users')
-        .then(response => response.json())
-        .then(users => {
-            const usersList = document.getElementById('usersList');
-            users.forEach(user => {
-                const option = document.createElement('option');
-                option.value = user.id;
-                option.text = user.login;
-                usersList.appendChild(option);
 
-            });
-        });
-    };
-//===================================================================================================    
+// envoi du formulaire de connexion vers POST /login
+btnConnexion.addEventListener('click', function() {
+  const pseudo = document.getElementById('loginUser').value;
+  const motDePasse = document.getElementById('loginPass').value;
+  const zoneMessage = document.getElementById('loginMsg');
 
+  fetch('/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ V_log: pseudo, V_pass: motDePasse })
+  })
+  .then(function(reponse) { return reponse.json(); })
+  .then(function(donnees) {
+    if (donnees.id) {
+      pseudoConnecte = pseudo;
+      idConnecte = donnees.id;
+      afficherApplication();
+    } else {
+      zoneMessage.textContent = donnees.message;
+    }
+  });
+});
+
+
+// déconnexion
+btnDeconnexion.addEventListener('click', function() {
+  fetch('/endgame', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: idConnecte })
+  })
+  .then(function(reponse) { return reponse.json(); })
+  .then(function(donnees) {
+    console.log(donnees.message);
+  });
+
+  pseudoConnecte = null;
+  idConnecte = null;
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('authOverlay').style.display = 'flex';
+  document.getElementById('startScreen').style.display = '';
+  document.getElementById('cardScreen').style.display = 'none';
+});

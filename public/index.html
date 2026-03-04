@@ -1,39 +1,127 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="fr">
 <head>
-    <meta charset='utf-8'>
-    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-    <title>Page Title</title>
-    <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <link rel='stylesheet' type='text/css' media='screen' href='main.css'>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EPSTEIN FILES — Qui est impliqué ?</title>
+  <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="main.css" />
 </head>
-
 <body>
-    <div id="contenu">
-        <h1 id="bombe">Bienvenue sur la page d'accueil!</h1>
-        <div class="color">
-            <h2>Login :</h2>
-            <input type="text" id="monInput">
-        </div>
-        <div class="color">
-            <h2> Mot De Passe :</h2>
-            <input type="text" id="monInput2">
-            <input type="button" value="Inscription" id="monBouton">
-        </div>
-    </div>
-    <div id="votreSection">
-        <div class="color1">
-            <select id="usersList"></select>
-            <input type="button" value="Voter pour l'utilisteur" id="userSelectedButton">
-        </div>
-        <div id="resultat1">
-            <table id="resultat">
 
-            </table>
+  <!-- pop-up d'authentification -->
+  <div id="authOverlay">
+    <div class="auth-box">
+      <div class="auth-stamp">EPSTEIN FILES</div>
+      <div class="auth-subtitle">ACCÈS RESTREINT — IDENTIFICATION REQUISE</div>
+
+      <!-- radio buttons cachés qui pilotent l'affichage des onglets -->
+      <input type="radio" name="onglet" id="radioConnexion" checked />
+      <input type="radio" name="onglet" id="radioInscription" />
+
+      <div class="auth-tabs">
+        <label class="auth-tab" for="radioConnexion">CONNEXION</label>
+        <label class="auth-tab" for="radioInscription">INSCRIPTION</label>
+      </div>
+
+      <!-- formulaire de connexion -->
+      <div id="loginForm" class="auth-form">
+        <div>
+          <label class="field-label">IDENTIFIANT</label>
+          <input class="auth-input" id="loginUser" type="text" placeholder="Identifiant" />
         </div>
+        <div>
+          <label class="field-label">MOT DE PASSE</label>
+          <input class="auth-input" id="loginPass" type="text" placeholder="Mot de Passe" />
+        </div>
+        <button class="auth-btn" id="btnConnexion">ENTRER</button>
+        <div class="auth-msg" id="loginMsg"></div>
+      </div>
+
+      <!-- formulaire d'inscription -->
+      <div id="registerForm" class="auth-form">
+        <div>
+          <label class="field-label">Identifiant (pseudo)</label>
+          <input class="auth-input" id="regUser" type="text" placeholder="Identifiant" />
+        </div>
+        <div>
+          <label class="field-label">MOT DE PASSE</label>
+          <input class="auth-input" id="regPass" type="text" placeholder="Mot de Passe" />
+        </div>
+        <button class="auth-btn" id="btnInscription">CRÉER MON ACCÈS</button>
+        <div class="auth-msg" id="registerMsg"></div>
+      </div>
     </div>
+  </div>
+
+  <!-- application principale -->
+  <div id="mainApp">
+
+    <header>
+      <div class="header-title"><span>■</span> EPSTEIN FILES</div>
+      <div>
+        <span class="header-user">Connecté en tant que <b id="displayUsername"></b></span>
+        <button class="logout-btn" id="btnDeconnexion">QUITTER</button>
+      </div>
+    </header>
+
+    <div class="game-area">
+
+      <!-- écran d'accueil avec le bouton jouer -->
+      <div id="startScreen">
+        <div class="game-label">DOSSIER CLASSIFIÉ · NIVEAU : CONFIDENTIEL</div>
+        <div class="big-title">QUI EST<br>DANS LES <span class="accent">FICHIERS</span> ?</div>
+        <div class="tagline">IDENTIFIEZ LES PERSONNALITÉS MENTIONNÉES</div>
+        <button class="play-btn" id="btnJouer">▶ JOUER</button>
+      </div>
+
+      <!-- écran de jeu avec les cartes -->
+      <div id="cardScreen">
+
+        <div class="score-bar">
+          <div class="score-item">
+            <div class="score-number correct" id="scoreCorrect">0</div>
+            <div class="score-label">CORRECTS</div>
+          </div>
+          <div class="score-item">
+            <div class="score-number wrong" id="scoreWrong">0</div>
+            <div class="score-label">ERREURS</div>
+          </div>
+        </div>
+
+        <div class="round-info" id="roundInfo">DOSSIER N°1</div>
+
+        <!-- carte de la personnalité -->
+        <div class="personality-card" id="personalityCard">
+          <div class="card-photo-placeholder" id="cardPhotoPlaceholder">👤</div>
+          <img class="card-photo" id="cardPhoto" style="display:none;" alt="" />
+          <div class="card-body">
+            <div class="card-name" id="cardName">Chargement...</div>
+            <div class="card-meta" id="cardMeta"></div>
+          </div>
+          <div class="card-stamp" id="cardStamp">?</div>
+        </div>
+
+        <div class="answer-buttons">
+          <button class="ans-btn yes" id="btnOui">✗ MENTIONNÉ</button>
+          <button class="ans-btn no" id="btnNon">✓ ABSENT</button>
+        </div>
+
+        <div id="resultFeedback"></div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- panneau classement -->
+  <div class="leaderboard" id="leaderboard">
+    <div class="leaderboard-titre">CLASSEMENT</div>
+    <table id="leaderboardContenu"></table>
+  </div>
+  <button class="leaderboard-toggle" id="leaderboardToggle">CLASSEMENT</button>
+
 </body>
-<script src='front.js'></script>
+  <script src="front.js"></script>
 
 </html>
