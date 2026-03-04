@@ -2,8 +2,7 @@
 let pseudoConnecte = null;
 let idConnecte = null;
 let personnaliteActuelle = null;
-let scoreOk = 0;
-let scoreErreur = 0;
+let scoreActuel = 0;
 let numeroRound = 1;
 let classementOuvert = false;
 
@@ -12,6 +11,7 @@ const btnConnexion = document.getElementById('btnConnexion');
 const btnInscription = document.getElementById('btnInscription');
 const btnDeconnexion = document.getElementById('btnDeconnexion');
 const btnJouer = document.getElementById('btnJouer');
+const btnRejouer = document.getElementById('btnRejouer');
 const btnOui = document.getElementById('btnOui');
 const btnNon = document.getElementById('btnNon');
 const leaderboardToggle = document.getElementById('leaderboardToggle');
@@ -77,4 +77,152 @@ btnDeconnexion.addEventListener('click', function() {
   document.getElementById('authOverlay').style.display = 'flex';
   document.getElementById('startScreen').style.display = '';
   document.getElementById('cardScreen').style.display = 'none';
+  document.getElementById('finScreen').style.display = 'none';
 });
+
+
+// on cache le pop-up et on affiche l'application principale
+function afficherApplication() {
+  document.getElementById('authOverlay').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  document.getElementById('displayUsername').textContent = pseudoConnecte;
+  chargerClassement();
+}
+
+
+// lancement du jeu
+btnJouer.addEventListener('click', function() {
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('cardScreen').style.display = 'flex';
+
+  scoreActuel = 0;
+  numeroRound = 1;
+  document.getElementById('scoreActuel').textContent = 0;
+
+  fetch('/startgame', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: idConnecte })
+  })
+  .then(function(reponse) { return reponse.json(); })
+  .then(function(donnees) {
+    console.log(donnees.message);
+  });
+
+  chargerProchaineCarte();
+});
+
+
+// rejouer depuis l'écran de fin
+btnRejouer.addEventListener('click', function() {
+  document.getElementById('finScreen').style.display = 'none';
+  document.getElementById('startScreen').style.display = '';
+});
+
+
+// fin de partie : on sauvegarde le score et on affiche l'écran de fin
+function terminerPartie() {
+  fetch('/endgame', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: idConnecte })
+  })
+  .then(function(reponse) { return reponse.json(); })
+  .then(function(donnees) {
+    console.log(donnees.message);
+    chargerClassement();
+  });
+
+  document.getElementById('cardScreen').style.display = 'none';
+  document.getElementById('scoreFinal').textContent = scoreActuel;
+  document.getElementById('finScreen').style.display = 'flex';
+}
+
+
+// chargement d'une nouvelle carte depuis GET /quizz
+function chargerProchaineCarte() {
+  btnOui.disabled = false;
+  btnNon.disabled = false;
+  document.getElementById('resultFeedback').textContent = '';
+  document.getElementById('cardStamp').className = 'card-stamp';
+  document.getElementById('cardStamp').textContent = '?';
+  document.getElementById('roundInfo').textContent = 'DOSSIER N°' + numeroRound;
+
+  fetch('/quizz')
+  .then(function(reponse) { return reponse.json(); })
+  .then(function(donnees) {
+    personnaliteActuelle = donnees.question;
+
+    document.getElementById('cardName').textContent = donnees.question.nom;
+
+    if (donnees.question.chemin) {
+      document.getElementById('cardPhoto').src = donnees.question.chemin;
+      document.getElementById('cardPhoto').style.display = 'block';
+      document.getElementById('cardPhotoPlaceholder').style.display = 'none';
+    } else {
+      document.getElementById('cardPhoto').style.display = 'none';
+      document.getElementById('cardPhotoPlaceholder').style.display = 'flex';
+    }
+  });
+}
+
+
+// envoi de la réponse du joueur vers POST /reponse
+// valeurReponse = 1 si "mentionné", 0 si "absent"
+function repondre(valeurReponse) {
+  btnOui.disabled = true;
+  btnNon.disabled = true;
+
+  fetch('/reponse', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idQuizz: personnaliteActuelle.id, reponse: valeurReponse, id: idConnecte })
+  })
+  .then(function(reponse) { return reponse.json(); })
+  .then(function(donnees) {
+
+    // on déduit la vraie réponse pour afficher le bon tampon
+    let vraiReponse;
+    if (donnees.message == 'score mis à jour') {
+      vraiReponse = valeurReponse;
+    } else {
+      vraiReponse = (valeurReponse == 1) ? 0 : 1;
+    }
+
+    if (vraiReponse == 1) {
+      document.getElementById('cardStamp').textContent = 'MENTIONNÉ';
+      document.getElementById('cardStamp').className = 'card-stamp mentioned';
+    } else {
+      document.getElementById('cardStamp').textContent = 'ABSENT';
+      document.getElementById('cardStamp').className = 'card-stamp clean';
+    }
+
+    if (donnees.message == 'score mis à jour') {
+      scoreActuel++;
+      document.getElementById('scoreActuel').textContent = scoreActuel;
+      document.getElementById('resultFeedback').textContent = '✓ BONNE RÉPONSE';
+      document.getElementById('resultFeedback').className = 'feedback-ok';
+    } else {
+      document.getElementById('resultFeedback').textContent = '✗ MAUVAISE RÉPONSE';
+      document.getElementById('resultFeedback').className = 'feedback-erreur';
+    }
+
+    numeroRound++;
+
+    // le back signale la fin de partie avec stop: true
+    if (donnees.stop == true) {
+      setTimeout(function() {
+        terminerPartie();
+      }, 1800);
+    } else {
+      setTimeout(function() {
+        chargerProchaineCarte();
+      }, 1800);
+    }
+
+    chargerClassement();
+  });
+}
+
+btnOui.addEventListener('click', function() { repondre(1); });
+btnNon.addEventListener('click', function() { repondre(0); });

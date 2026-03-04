@@ -319,6 +319,19 @@ header {
   transform: translateY(0);
 }
 
+/* score en cours de partie */
+#scoreBar {
+  font-family: 'Special Elite', serif;
+  font-size: 22px;
+  letter-spacing: 3px;
+  color: var(--cream);
+  margin-bottom: 32px;
+}
+
+#scoreBar span {
+  color: var(--gold);
+}
+
 /* écran de jeu avec les cartes */
 #cardScreen {
   display: none;
@@ -333,35 +346,35 @@ header {
   margin-bottom: 24px;
 }
 
-.score-bar {
-  display: flex;
-  gap: 32px;
-  margin-bottom: 40px;
-}
-
-.score-item {
+/* écran de fin de partie */
+#finScreen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
   text-align: center;
 }
 
-.score-number {
+.fin-titre {
   font-family: 'Special Elite', serif;
   font-size: 36px;
-  line-height: 1;
+  letter-spacing: 4px;
+  color: var(--cream);
 }
 
-.score-number.correct {
-  color: var(--stamp-green);
-}
-
-.score-number.wrong {
-  color: var(--red);
-}
-
-.score-label {
-  font-size: 10px;
+.fin-score {
+  font-family: 'Courier Prime', monospace;
+  font-size: 18px;
   letter-spacing: 2px;
-  color: #555;
-  margin-top: 4px;
+  color: #888;
+}
+
+.fin-score span {
+  font-family: 'Special Elite', serif;
+  font-size: 64px;
+  display: block;
+  margin-top: 8px;
+  color: var(--gold);
 }
 
 /* carte personnalité */
