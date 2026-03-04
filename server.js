@@ -1,4 +1,3 @@
-
 const express = require('express'); // importation d'express
 const app = express(); // création de l'application express
 const mysql = require('mysql2');
