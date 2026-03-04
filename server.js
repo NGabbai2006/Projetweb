@@ -27,7 +27,7 @@ app.use(express.static('public'));
 //=========================================================================================================
 
 app.get('/Top100', (req, res) => { // route GET pour /scoreTab
-  connection.query('SELECT User.login, Score.points, Score.winstreak FROM Score,User WHERE Score.idUser = User.id ORDER BY points DESC LIMIT 100',
+  connection.query('SELECT User.login, Score.points FROM Score,User WHERE Score.idUser = User.id ORDER BY points DESC LIMIT 100',
     (err, results) => {
       if (err) {
         console.error('Erreur lors de la récupération du classement :', err);
@@ -59,14 +59,14 @@ app.get('/quizz', (req, res) => { // route POST pour /quizz
 //=========================================================================================================\
 
 app.post('/startgame', (req, res) => { // route POST pour /startgame
-        connection.query('UPDATE Score SET pointsTemp = 0, winstreakTemp = 0 WHERE idUser = ?',
+        connection.query('UPDATE Score SET pointsTemp = 0 WHERE idUser = ?',
           [req.body.id], (err, results) => {
             if (err) {
-              console.error('Erreur lors de la réinitialisation du scoreTemp et winstreakTemp :', err);
+              console.error('Erreur lors de la réinitialisation du scoreTemp :', err);
               res.status(500).json({ message: 'Erreur serveur' });
               return;
             }
-            console.log('scoreTemp et winstreakTemp réinitialisés avec succès');
+            console.log('scoreTemp réinitialisés avec succès');
             res.json({ message: 'reinitialisation effectuée' });
           });
 
@@ -77,28 +77,15 @@ app.post('/startgame', (req, res) => { // route POST pour /startgame
 //=========================================================================================================
 // route pour la fin de partie et la mise à jour du score
 app.post('/endgame', (req, res) => { // route POST pour /endgame
-  connection.query('SELECT points, pointsTemp, winstreakTemp, winstreak FROM Score WHERE idUser = ?',
+  connection.query('SELECT points, pointsTemp FROM Score WHERE idUser = ?',
     [req.body.id], (err, results) => {
       if (err) {
         console.error('Erreur lors de la récupération du score :', err);
         res.status(500).json({ message: 'Erreur serveur' });
 
       }
-      if (results[0].points < results[0].pointsTemp && results[0].winstreak < results[0].winstreakTemp) {
-        connection.query('UPDATE Score SET points = pointsTemp, pointsTemp=0, winstreak = winstreakTemp , winstreakTemp = 0 WHERE idUser = ?',
-          [req.body.id], (err, results) => {
-            if (err) {
-              console.error('Erreur lors de la mise à jour du winstreak et du score :', err);
-              res.status(500).json({ message: 'Erreur serveur' });
-              return;
-            }
-            console.log('winstreak mis à jour avec succès');
-            res.json({ message: 'score et winstreak mis à jour' });
-          });
-      }
-
-      else if (results[0].points < results[0].pointsTemp) {
-        connection.query('UPDATE Score SET points = pointsTemp , pointsTemp = 0 WHERE idUser = ?',
+      else if (results[0].points < results[0].pointsTemp ) {
+        connection.query('UPDATE Score SET points = pointsTemp, pointsTemp = 0 WHERE idUser = ?',
           [req.body.id], (err, results) => {
             if (err) {
               console.error('Erreur lors de la mise à jour du score :', err);
@@ -107,23 +94,23 @@ app.post('/endgame', (req, res) => { // route POST pour /endgame
             }
             console.log('score mis à jour avec succès');
             res.json({ message: 'score mis à jour' });
-          })
+          });
       }
-      else if (results[0].winstreak < results[0].winstreakTemp) {
-        connection.query('UPDATE Score SET winstreak = winstreakTemp , winstreakTemp = 0 WHERE idUser = ?',
-          [req.body.id], (err, results) => {
-            if (err) {
-              console.error('Erreur lors de la mise à jour du winstreak :', err);
-              res.status(500).json({ message: 'Erreur serveur' });
-              return;
-            }
-            console.log('winstreak mis à jour avec succès');
-            res.json({ message: 'winstreak mis à jour' });
+      // else if (results[0].winstreak < results[0].winstreakTemp) {
+      //   connection.query('UPDATE Score SET winstreak = winstreakTemp , winstreakTemp = 0 WHERE idUser = ?',
+      //     [req.body.id], (err, results) => {
+      //       if (err) {
+      //         console.error('Erreur lors de la mise à jour du winstreak :', err);
+      //         res.status(500).json({ message: 'Erreur serveur' });
+      //         return;
+      //       }
+      //       console.log('winstreak mis à jour avec succès');
+      //       res.json({ message: 'winstreak mis à jour' });
 
-          })
-      }
+      //     })
+      // }
         else {
-          res.json({ message: 'score et winstreak non mis à jour' });
+          res.json({ message: 'score non mis à jour' });
         }
     });
 });
@@ -141,7 +128,7 @@ app.post('/reponse', (req, res) => { // route GET pour /reponse
         return;
       }
       if (results[0].reponse == req.body.reponse) {
-    connection.query('UPDATE Score SET pointsTemp = pointsTemp + 1, winstreakTemp = winstreakTemp + 1 WHERE idUser = ?',
+    connection.query('UPDATE Score SET pointsTemp = pointsTemp + 1 WHERE idUser = ?',
       [req.body.id], (err, results) => {
         if (err) {
           console.error('Erreur lors de la mise à jour du score :', err);
@@ -153,17 +140,17 @@ app.post('/reponse', (req, res) => { // route GET pour /reponse
       });
   }
   else {
-    connection.query('UPDATE Score SET winstreakTemp = 0 WHERE idUser = ?',
-      [req.body.id], (err, results) => {
-        if (err) {
-          console.error('Erreur lors de la mise à jour du score :', err);
-          res.status(500).json({ message: 'Erreur serveur' });
-          return;
-        }
-      }
-    )
+    // connection.query('UPDATE Score SET winstreakTemp = 0 WHERE idUser = ?',
+    //   [req.body.id], (err, results) => {
+    //     if (err) {
+    //       console.error('Erreur lors de la mise à jour du score :', err);
+    //       res.status(500).json({ message: 'Erreur serveur' });
+    //       return;
+    //     }
+    //   }
+    // )
     console.log('mauvaise réponse');
-    res.json({ message: 'mauvaise réponse  winstreak perdu' });
+    res.json({ message: 'mauvaise réponse fin ', stop: true });
   }
 });
 });
