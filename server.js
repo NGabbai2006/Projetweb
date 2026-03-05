@@ -224,21 +224,21 @@ app.post('/login', (req, res) => { // route POST pour /login
     [req.body.V_log],
     (err, results) => {
       async function attHache() {
-      let hache = await bcrypt.compare(req.body.V_pass, results[0].password);
-      if (err) {
+   if (err) {
         console.error('Erreur lors de la vérification des identifiants :', err);
         res.status(500).json({ message: 'Erreur serveur' });
         return;
       }      
           
       
-      else if (results.length === 0) {
+      if (results.length === 0) {
         res.json({ message: 'Identifiants invalides' });
         return;
       }
 
-
-      else if (hache) {
+      let hache = await bcrypt.compare(req.body.V_pass, results[0].password);
+     
+      if (hache) {
         console.log('Connexion réussie pour l\'utilisateur :', results[0].login);
         
         res.json({ message: 'Connexion réussie ', id: results[0].id });
