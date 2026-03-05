@@ -8,7 +8,7 @@ const auth = require('./middleware/auth');
 
 
 const connection = mysql.createConnection({ // configuration de la connexion à la base de données
-  host: '172.29.18.129', //changer ip
+  host: '192.168.1.77', //changer ip
   user: 'Userweb',
   password: 'Userweb',
   database: 'ProjetWeb'
@@ -50,31 +50,38 @@ app.get('/quizz', (req, res) => { // route POST pour /quizz
       res.status(500).json({ message: 'Erreur serveur' });
 
     }
-    let saveId = results[randomImage].id;
     function regenere() {
       randomImage = Math.floor(Math.random() * results.length);
+       let saveId = results[randomImage].id;
       connection.query('SELECT chemin,nom,attendre FROM Quizz WHERE id = ?',
         [results[randomImage].id], (err, results) => {
-          
+
           if (err) {
             console.error('Erreur lors de la récupération du quizz :', err);
             res.status(500).json({ message: 'Erreur serveur' });
-          
+
           }
           else if (results[0].attendre > 0) {
             return regenere();
           }
           else {
             let idTemp = crypto.randomBytes(16).toString('hex');
+            var stocker = {
+              chemin: results[0].chemin,
+              nom: results[0].nom,
+              id: idTemp
+            }
+            
             connection.query('UPDATE Quizz SET idTemp = ? WHERE id = ?',
               [idTemp, saveId], (err, results) => {
                 if (err) {
                   console.error('Erreur lors de la mise à jour du quizz :', err);
                   res.status(500).json({ message: 'Erreur serveur' });
-                  
+
                 }
+
                 console.log('quizz mis à jour avec succès');
-                res.json({ question: results[randomImage]  });
+                res.json({ question: stocker });
               });
           }
 
@@ -150,14 +157,18 @@ app.post('/endgame', auth, (req, res) => { // route POST pour /endgame
 // route pour les reponses 
 
 app.post('/reponse', auth, (req, res) => { // route GET pour /reponse
-  connection.query('SELECT attendre,reponse FROM Quizz WHERE id = ?',
+  connection.query('SELECT attendre,reponse FROM Quizz WHERE idTemp = ?',
     [req.body.idQuizz], (err, results) => {
       if (err) {
         console.error('Erreur lors de la récupération de la réponse :', err);
         res.status(500).json({ message: 'Erreur serveur' });
-
+        
       }
-      if (results[0].reponse == req.body.reponse) {
+      if (results.length === 0) {
+        res.json({ message: 'Quizz introuvable' });
+        
+      }
+      else if (results[0].reponse == req.body.reponse) {
         connection.query('UPDATE Score SET pointsTemp = pointsTemp + 1 WHERE idUser = ?',
           [req.auth.id], (err, results) => {
             if (err) {
@@ -166,26 +177,26 @@ app.post('/reponse', auth, (req, res) => { // route GET pour /reponse
 
             }
             else {
-              if (results[0].attendre > 0) {
-                connection.query('UPDATE Quizz SET attendre = 10, idTemp = NULL WHERE idTemp = ?',
-                  [req.body.idTemp], (err, results) => {
+                connection.query('UPDATE Quizz SET attendre = 15, idTemp = 0 WHERE idTemp = ?',
+                  [req.body.idQuizz], (err, results) => {
                     if (err) {
                       console.error('Erreur lors de la mise à jour du quizz :', err);
                       res.status(500).json({ message: 'Erreur serveur' });
-                      
+
                     }
                     else {
-                      connection.query('UPDATE Quizz SET attendre = attendre - 1 WHERE attendre > 0 AND attendre!=10',
-                        [req.body.idTemp], (err, results) => {
+                      connection.query('UPDATE Quizz SET attendre = attendre - 1 WHERE attendre !=0 AND idTemp != ?',
+                        [req.body.idQuizz], (err, results) => {
                           if (err) {
                             console.error('Erreur lors de la mise à jour du quizz :', err);
                             res.status(500).json({ message: 'Erreur serveur' });
-                           
+                            
                           }
                         })
                     }
+                    console.log('score mis à jour');
+                    res.json({ message: 'score mis à jour' });
                   })
-              }
             }
           });
       }
@@ -200,23 +211,23 @@ app.post('/reponse', auth, (req, res) => { // route GET pour /reponse
         //     }
         //   }
         // )
-        connection.query('UPDATE Quizz SET attendre = 10, idTemp= NULL WHERE idTemp = ?',
-          [req.body.idTemp], (err, results) => {
+        connection.query('UPDATE Quizz SET attendre = 10, idTemp= 0 WHERE idTemp = ?',
+          [req.body.idQuizz], (err, results) => {
             if (err) {
               console.error('Erreur lors de la mise à jour du quizz :', err);
               res.status(500).json({ message: 'Erreur serveur' });
-        
+
             }
             else {
-              connection.query('UPDATE Quizz SET attendre = attendre - 1 WHERE attendre > 0 AND attendre!=10',
-                (err, results) => {
+              connection.query('UPDATE Quizz SET attendre = attendre - 1 WHERE attendre > 0 AND idTemp != ?',
+                [req.body.idQuizz], (err, results) => {
                   if (err) {
                     console.error('Erreur lors de la mise à jour du quizz :', err);
                     res.status(500).json({ message: 'Erreur serveur' });
-                 
+
                   }
                   console.log('mauvaise réponse');
-                  res.json({ message: 'mauvaise réponse fin ', stop: true });
+                  res.json({ message: 'mauvaise réponse', stop: true });
                 }
 
               )
@@ -234,7 +245,7 @@ app.post('/register', (req, res) => { // route POST pour /register
   async function reloadRegister() {
     if (req.body.V_log.length < 4) {
       res.json({ message: 'Le login doit contenir au moins 4 caractères' });
-      
+
     }
     if (req.body.V_pass.length < 8) {
       res.json({ message: 'Le mot de passe doit contenir au moins 8 caractères' });
@@ -269,7 +280,7 @@ app.post('/register', (req, res) => { // route POST pour /register
 
               }
               console.log('Insertion réussie, ID utilisateur :', results.insertId);
-              res.json({ message: 'Inscription réussie !', id: results.insertId });
+              res.json({ message: 'Inscription réussie !' });
             }
           );
         }
@@ -296,13 +307,13 @@ app.post('/login', (req, res) => { // route POST pour /login
         if (err) {
           console.error('Erreur lors de la vérification des identifiants :', err);
           res.status(500).json({ message: 'Erreur serveur' });
-        
+
         }
 
 
         if (results.length === 0) {
           res.json({ message: 'Identifiants invalides' });
-    
+
         }
 
         let hache = await bcrypt.compare(req.body.V_pass, results[0].password);
