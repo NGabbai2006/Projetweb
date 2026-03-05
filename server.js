@@ -184,34 +184,44 @@ app.post('/quizz', auth, (req, res) => { // route POST pour /quizz
                       nom: results[0].nom,
                       id: idTemp
                     }
+                    connection.query('DELETE FROM Session WHERE attendre =1', (err, results) => {
+                      if (err) {
+                        console.error('Erreur lors de la suppression des sessions :', err);
+                        res.status(500).json({ message: 'Erreur serveur' });
 
-                    connection.query('UPDATE Session SET idTemp = ? WHERE idQuizz = ? AND idUser = ?',
-                      [idTemp, saveId, req.auth.id], (err, results) => {
-                        if (err) {
-                          console.error('Erreur lors de la mise à jour du quizz :', err);
-                          res.status(500).json({ message: 'Erreur serveur' });
+                      }
+                      connection.query('UPDATE Session SET idTemp = ? WHERE idQuizz = ? AND idUser = ?',
+                        [idTemp, saveId, req.auth.id], (err, results) => {
+                          if (err) {
+                            console.error('Erreur lors de la mise à jour du quizz :', err);
+                            res.status(500).json({ message: 'Erreur serveur' });
 
-                        }
+                          }
 
-                        console.log('quizz mis à jour avec succès');
-                        res.json({ question: stocker });
-                      });
+                          console.log('quizz mis à jour avec succès');
+                          res.json({ question: stocker });
+                        });
+                    })
+
                   }
+                }
+              )
 
-                });
-            }
-
-          )
-
+            })
         }
         else {
           return regenere();
         }
+
+
       })
+
     }
     regenere();
-  })
+  });
+  
 })
+
 
 //=========================================================================================================
 // route pour les reponses 
@@ -368,15 +378,14 @@ app.post('/login', (req, res) => { // route POST pour /login
           res.status(500).json({ message: 'Erreur serveur' });
 
         }
-
-
-        if (results.length === 0) {
+        else if (results.length === 0) {
           res.json({ message: 'Identifiants invalides' });
-
+          
         }
 
+        else {
+        
         let hache = await bcrypt.compare(req.body.V_pass, results[0].password);
-
         if (hache) {
           console.log('Connexion réussie pour l\'utilisateur :', results[0].login);
 
@@ -393,11 +402,13 @@ app.post('/login', (req, res) => { // route POST pour /login
         else {
           console.log('Mot de passe incorrect ou identifiants incorrect');
           res.json({
-            message: 'Identifiants invalides'
+            message: 'Identifiants invalides merci de saisir des identifiants valide'
           });
         }
       }
-      attHache();
+      
+        }
+      attHache();  
     });
 });
 
