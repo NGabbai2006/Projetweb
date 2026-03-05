@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 
 const connection = mysql.createConnection({ // configuration de la connexion à la base de données
-  host: '172.29.18.129', //change ton ip 
+  host: '172.29.16.241', //change ton ip 
   user: 'Userweb',
   password: 'Userweb',
   database: 'ProjetWeb'
@@ -20,7 +20,7 @@ connection.connect((err) => {
 });
 
 app.use(express.json());
-app.use(express.static('public')); 
+app.use(express.static('public'));
 
 
 
@@ -40,15 +40,15 @@ app.get('/Top100', (req, res) => { // route GET pour /scoreTab
 
 //=========================================================================================================
 app.get('/quizz', (req, res) => { // route POST pour /quizz
-  let randomImage=0;
+  let randomImage = 0;
   connection.query('SELECT nom,chemin,id FROM Quizz', (err, results) => {
     if (err) {
       console.error('Erreur lors de la récupération du quizz :', err);
       res.status(500).json({ message: 'Erreur serveur' });
       return;
     }
-      randomImage = Math.floor(Math.random() * results.length);
-    
+    randomImage = Math.floor(Math.random() * results.length);
+
 
     res.json({ question: results[randomImage] });
   });
@@ -59,18 +59,18 @@ app.get('/quizz', (req, res) => { // route POST pour /quizz
 //=========================================================================================================\
 
 app.post('/startgame', (req, res) => { // route POST pour /startgame
-        connection.query('UPDATE Score SET pointsTemp = 0 WHERE idUser = ?',
-          [req.body.id], (err, results) => {
-            if (err) {
-              console.error('Erreur lors de la réinitialisation du scoreTemp :', err);
-              res.status(500).json({ message: 'Erreur serveur' });
-              return;
-            }
-            console.log('scoreTemp réinitialisés avec succès');
-            res.json({ message: 'reinitialisation effectuée' });
-          });
-
+  connection.query('UPDATE Score SET pointsTemp = 0 WHERE idUser = ?',
+    [req.body.id], (err, results) => {
+      if (err) {
+        console.error('Erreur lors de la réinitialisation du scoreTemp :', err);
+        res.status(500).json({ message: 'Erreur serveur' });
+        return;
       }
+      console.log('scoreTemp réinitialisés avec succès');
+      res.json({ message: 'reinitialisation effectuée' });
+    });
+
+}
 );
 
 
@@ -84,7 +84,7 @@ app.post('/endgame', (req, res) => { // route POST pour /endgame
         res.status(500).json({ message: 'Erreur serveur' });
 
       }
-      else if (results[0].points < results[0].pointsTemp ) {
+      else if (results[0].points < results[0].pointsTemp) {
         connection.query('UPDATE Score SET points = pointsTemp, pointsTemp = 0 WHERE idUser = ?',
           [req.body.id], (err, results) => {
             if (err) {
@@ -109,9 +109,9 @@ app.post('/endgame', (req, res) => { // route POST pour /endgame
 
       //     })
       // }
-        else {
-          res.json({ message: 'score non mis à jour' });
-        }
+      else {
+        res.json({ message: 'score non mis à jour' });
+      }
     });
 });
 
@@ -128,40 +128,48 @@ app.post('/reponse', (req, res) => { // route GET pour /reponse
         return;
       }
       if (results[0].reponse == req.body.reponse) {
-    connection.query('UPDATE Score SET pointsTemp = pointsTemp + 1 WHERE idUser = ?',
-      [req.body.id], (err, results) => {
-        if (err) {w
-          console.error('Erreur lors de la mise à jour du score :', err);
-          res.status(500).json({ message: 'Erreur serveur' });
-          return;
-        }
-        console.log('score mis à jour avec succès');
-        res.json({ message: 'score mis à jour' });
-      });
-  }
-  else {
-    // connection.query('UPDATE Score SET winstreakTemp = 0 WHERE idUser = ?',
-    //   [req.body.id], (err, results) => {
-    //     if (err) {
-    //       console.error('Erreur lors de la mise à jour du score :', err);
-    //       res.status(500).json({ message: 'Erreur serveur' });
-    //       return;
-    //     }
-    //   }
-    // )
-    console.log('mauvaise réponse');
-    res.json({ message: 'mauvaise réponse fin ', stop: true });
-  }
-});
+        connection.query('UPDATE Score SET pointsTemp = pointsTemp + 1 WHERE idUser = ?',
+          [req.body.id], (err, results) => {
+            if (err) {
+              w
+              console.error('Erreur lors de la mise à jour du score :', err);
+              res.status(500).json({ message: 'Erreur serveur' });
+              return;
+            }
+            console.log('score mis à jour avec succès');
+            res.json({ message: 'score mis à jour' });
+          });
+      }
+      else {
+        // connection.query('UPDATE Score SET winstreakTemp = 0 WHERE idUser = ?',
+        //   [req.body.id], (err, results) => {
+        //     if (err) {
+        //       console.error('Erreur lors de la mise à jour du score :', err);
+        //       res.status(500).json({ message: 'Erreur serveur' });
+        //       return;
+        //     }
+        //   }
+        // )
+        console.log('mauvaise réponse');
+        res.json({ message: 'mauvaise réponse fin ', stop: true });
+      }
+    });
 });
 
 //=========================================================================================================
 //route d'inscription
 //tokenid n'est pas vraiment un token juste un id dure a trouver
 app.post('/register', (req, res) => { // route POST pour /register
-  
+
   async function reloadRegister() {
-    
+    if (req.body.V_log.length < 4) {
+      res.json({ message: 'Le login doit contenir au moins 4 caractères' });
+      return;
+    }
+    if (req.body.V_pass.length < 8) {
+      res.json({ message: 'Le mot de passe doit contenir au moins 8 caractères' });
+      return;
+    }
     let hache = await bcrypt.hash(req.body.V_pass, 10);
     const tokenId = crypto.randomBytes(16).toString('hex'); //genere un tokenid
     connection.query(
@@ -174,9 +182,9 @@ app.post('/register', (req, res) => { // route POST pour /register
               console.error('Erreur : tokenId en double, génération d\'un nouveau tokenId');
               return reloadRegister();
             }
-            else{
-            console.error('Erreur: login déjà utilisé :', err);
-            return res.status(400).json({ message: 'Login déjà utilisé' });
+            else {
+              console.error('Erreur: login déjà utilisé :', err);
+              return res.status(400).json({ message: 'Login déjà utilisé' });
             }
           }
           else {
@@ -184,6 +192,7 @@ app.post('/register', (req, res) => { // route POST pour /register
             res.status(500).json({ message: 'Erreur serveur lors de l\'inscription' });
           }
         }
+
         else if (results.length === 0) {
           res.json({ message: 'Merci d\'enregistrer vos identifiants' });
           return;
@@ -200,7 +209,7 @@ app.post('/register', (req, res) => { // route POST pour /register
 
               }
               console.log('Insertion réussie, ID utilisateur :', tokenId);
-              res.json({ message: 'Inscription réussie !', id: tokenId });
+              res.json({ message: 'Inscription réussie !', id: tokenId, results: results });
             }
           );
         }
@@ -218,38 +227,38 @@ app.post('/register', (req, res) => { // route POST pour /register
 app.post('/login', (req, res) => { // route POST pour /login
   console.log('Données recues pour la connexion'); // log dans la console
   console.log(req.body);
-  
+
   connection.query(
     'SELECT * FROM User WHERE login = ?',
     [req.body.V_log],
     (err, results) => {
       async function attHache() {
-   if (err) {
-        console.error('Erreur lors de la vérification des identifiants :', err);
-        res.status(500).json({ message: 'Erreur serveur' });
-        return;
-      }      
-          
-      
-      if (results.length === 0) {
-        res.json({ message: 'Identifiants invalides' });
-        return;
-      }
+        if (err) {
+          console.error('Erreur lors de la vérification des identifiants :', err);
+          res.status(500).json({ message: 'Erreur serveur' });
+          return;
+        }
 
-      let hache = await bcrypt.compare(req.body.V_pass, results[0].password);
-     
-      if (hache) {
-        console.log('Connexion réussie pour l\'utilisateur :', results[0].login);
-        
-        res.json({ message: 'Connexion réussie ', id: results[0].id });
-      }
 
-      else {
-        console.log('Mot de passe incorrect ou identifiants incorrect');
-        res.json({ message: 'Identifiants invalides' });
+        if (results.length === 0) {
+          res.json({ message: 'Identifiants invalides' });
+          return;
+        }
+
+        let hache = await bcrypt.compare(req.body.V_pass, results[0].password);
+
+        if (hache) {
+          console.log('Connexion réussie pour l\'utilisateur :', results[0].login);
+
+          res.json({ message: 'Connexion réussie ', id: results[0].id });
+        }
+
+        else {
+          console.log('Mot de passe incorrect ou identifiants incorrect');
+          res.json({ message: 'Identifiants invalides' });
+        }
       }
-    }
-  attHache();
+      attHache();
     });
 });
 
