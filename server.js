@@ -3,6 +3,9 @@ const app = express(); // création de l'application express
 const mysql = require('mysql2');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const auth = require('./middleware/auth');
+
 
 const connection = mysql.createConnection({ // configuration de la connexion à la base de données
   host: '172.29.16.241', //change ton ip 
@@ -58,9 +61,9 @@ app.get('/quizz', (req, res) => { // route POST pour /quizz
 // methode post 
 //=========================================================================================================\
 
-app.post('/startgame', (req, res) => { // route POST pour /startgame
+app.post('/startgame',auth, (req, res) => { // route POST pour /startgame
   connection.query('UPDATE Score SET pointsTemp = 0 WHERE idUser = ?',
-    [req.body.id], (err, results) => {
+    [req.auth.id], (err, results) => {
       if (err) {
         console.error('Erreur lors de la réinitialisation du scoreTemp :', err);
         res.status(500).json({ message: 'Erreur serveur' });
@@ -76,9 +79,9 @@ app.post('/startgame', (req, res) => { // route POST pour /startgame
 
 //=========================================================================================================
 // route pour la fin de partie et la mise à jour du score
-app.post('/endgame', (req, res) => { // route POST pour /endgame
+app.post('/endgame',auth, (req, res) => { // route POST pour /endgame
   connection.query('SELECT points, pointsTemp FROM Score WHERE idUser = ?',
-    [req.body.id], (err, results) => {
+    [req.auth.id], (err, results) => {
       if (err) {
         console.error('Erreur lors de la récupération du score :', err);
         res.status(500).json({ message: 'Erreur serveur' });
@@ -86,7 +89,7 @@ app.post('/endgame', (req, res) => { // route POST pour /endgame
       }
       else if (results[0].points < results[0].pointsTemp) {
         connection.query('UPDATE Score SET points = pointsTemp, pointsTemp = 0 WHERE idUser = ?',
-          [req.body.id], (err, results) => {
+          [req.auth.id], (err, results) => {
             if (err) {
               console.error('Erreur lors de la mise à jour du score :', err);
               res.status(500).json({ message: 'Erreur serveur' });
@@ -98,7 +101,7 @@ app.post('/endgame', (req, res) => { // route POST pour /endgame
       }
       // else if (results[0].winstreak < results[0].winstreakTemp) {
       //   connection.query('UPDATE Score SET winstreak = winstreakTemp , winstreakTemp = 0 WHERE idUser = ?',
-      //     [req.body.id], (err, results) => {
+      //     [req.auth.id], (err, results) => {
       //       if (err) {
       //         console.error('Erreur lors de la mise à jour du winstreak :', err);
       //         res.status(500).json({ message: 'Erreur serveur' });
@@ -119,7 +122,7 @@ app.post('/endgame', (req, res) => { // route POST pour /endgame
 //=========================================================================================================
 // route pour les reponses 
 
-app.post('/reponse', (req, res) => { // route GET pour /reponse
+app.post('/reponse',auth,(req, res) => { // route GET pour /reponse
   connection.query('SELECT reponse FROM Quizz WHERE id = ?',
     [req.body.idQuizz], (err, results) => {
       if (err) {
@@ -129,9 +132,8 @@ app.post('/reponse', (req, res) => { // route GET pour /reponse
       }
       if (results[0].reponse == req.body.reponse) {
         connection.query('UPDATE Score SET pointsTemp = pointsTemp + 1 WHERE idUser = ?',
-          [req.body.id], (err, results) => {
+          [req.auth.id], (err, results) => {
             if (err) {
-              w
               console.error('Erreur lors de la mise à jour du score :', err);
               res.status(500).json({ message: 'Erreur serveur' });
               return;
@@ -142,7 +144,7 @@ app.post('/reponse', (req, res) => { // route GET pour /reponse
       }
       else {
         // connection.query('UPDATE Score SET winstreakTemp = 0 WHERE idUser = ?',
-        //   [req.body.id], (err, results) => {
+        //   [req.auth.id], (err, results) => {
         //     if (err) {
         //       console.error('Erreur lors de la mise à jour du score :', err);
         //       res.status(500).json({ message: 'Erreur serveur' });
@@ -171,21 +173,16 @@ app.post('/register', (req, res) => { // route POST pour /register
       return;
     }
     let hache = await bcrypt.hash(req.body.V_pass, 10);
-    const tokenId = crypto.randomBytes(16).toString('hex'); //genere un tokenid
+    
     connection.query(
-      'INSERT INTO User (id, login, password) VALUES (?,?, ?)',
-      [tokenId, req.body.V_log, hache],
+      'INSERT INTO User (login, password) VALUES (?,?)',
+      [req.body.V_log, hache],
       (err, results) => {
         if (err) {
-          if (err.code === 'ER_DUP_ENTRY') {
-            if (err.message.includes('PRIMARY')) {
-              console.error('Erreur : tokenId en double, génération d\'un nouveau tokenId');
-              return reloadRegister();
-            }
-            else {
+          if (err.code === 'ER_DUP_ENTRY') { 
               console.error('Erreur: login déjà utilisé :', err);
               return res.status(400).json({ message: 'Login déjà utilisé' });
-            }
+    
           }
           else {
             console.error('erreur lors de de l\'inscription :', err);
@@ -196,15 +193,15 @@ app.post('/register', (req, res) => { // route POST pour /register
           // ajout de l'user dans la table score car plus simple 
           connection.query(
             'INSERT INTO Score (idUser) VALUES (?)',
-            [tokenId],
+            [results.insertId],
             (err, resultsScore) => {
               if (err) {
                 console.error('Erreur lors de l\'insertion dans la table Score :', err);
                 res.status(500).json({ message: 'Erreur serveur lors de l\'insertion du score' });
 
               }
-              console.log('Insertion réussie, ID utilisateur :', tokenId);
-              res.json({ message: 'Inscription réussie !', id: tokenId, results: results });
+              console.log('Insertion réussie, ID utilisateur :', results.insertId);
+              res.json({ message: 'Inscription réussie !', id: results.insertId });
             }
           );
         }
@@ -245,12 +242,18 @@ app.post('/login', (req, res) => { // route POST pour /login
         if (hache) {
           console.log('Connexion réussie pour l\'utilisateur :', results[0].login);
 
-          res.json({ message: 'Connexion réussie ', id: results[0].id });
+          res.json({ message: 'Connexion réussie ', 
+            tokenId: jwt.sign({ 
+              id: results[0].id }, 
+              'KeyProjetWeb', 
+              { expiresIn: '2h' })
+           });
         }
 
         else {
           console.log('Mot de passe incorrect ou identifiants incorrect');
-          res.json({ message: 'Identifiants invalides' });
+          res.json({ message: 'Identifiants invalides'
+           });
         }
       }
       attHache();
