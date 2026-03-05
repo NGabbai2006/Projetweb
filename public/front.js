@@ -43,15 +43,21 @@ btnConnexion.addEventListener('click', function() {
 
   fetch('/login', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json',
+           },
+  
     body: JSON.stringify({ V_log: pseudo, V_pass: motDePasse })
   })
   .then(function(reponse) { return reponse.json(); })
   .then(function(donnees) {
-    if (donnees.id) {
+    if (donnees.tokenId) {
       pseudoConnecte = pseudo;
-      idConnecte = donnees.id;
-      afficherApplication();
+      idConnecte = donnees.tokenId;
+      zoneMessage.textContent = 'Connexion réussie !'; 
+      setTimeout(() => {            // laisser le temps au message de s'afficher avant de changer d'écran
+        afficherApplication();
+      }, 500);
+       zoneMessage.textContent = '';
     } else {
       zoneMessage.textContent = donnees.message;
     }
@@ -63,7 +69,9 @@ btnConnexion.addEventListener('click', function() {
 btnDeconnexion.addEventListener('click', function() {
   fetch('/endgame', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + idConnecte
+     },
     body: JSON.stringify({ id: idConnecte })
   })
   .then(function(reponse) { return reponse.json(); })
@@ -101,7 +109,9 @@ btnJouer.addEventListener('click', function() {
 
   fetch('/startgame', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + idConnecte
+     },
     body: JSON.stringify({ id: idConnecte })
   })
   .then(function(reponse) { return reponse.json(); })
@@ -124,7 +134,9 @@ btnRejouer.addEventListener('click', function() {
 function terminerPartie() {
   fetch('/endgame', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + idConnecte
+     },
     body: JSON.stringify({ id: idConnecte })
   })
   .then(function(reponse) { return reponse.json(); })
@@ -175,7 +187,9 @@ function repondre(valeurReponse) {
 
   fetch('/reponse', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + idConnecte
+    },
     body: JSON.stringify({ idQuizz: personnaliteActuelle.id, reponse: valeurReponse, id: idConnecte })
   })
   .then(function(reponse) { return reponse.json(); })
