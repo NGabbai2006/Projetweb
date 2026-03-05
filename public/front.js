@@ -160,7 +160,12 @@ function chargerProchaineCarte() {
   document.getElementById('cardStamp').textContent = '?';
   document.getElementById('roundInfo').textContent = 'DOSSIER N°' + numeroRound;
 
-  fetch('/quizz')
+  fetch('/quizz', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + idConnecte
+     }
+  })
   .then(function(reponse) { return reponse.json(); })
   .then(function(donnees) {
     personnaliteActuelle = donnees.question;
