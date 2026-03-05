@@ -54,9 +54,10 @@ btnConnexion.addEventListener('click', function() {
       pseudoConnecte = pseudo;
       idConnecte = donnees.tokenId;
       zoneMessage.textContent = 'Connexion réussie !'; 
-      setTimeout(() => {
+      setTimeout(() => {            // laisser le temps au message de s'afficher avant de changer d'écran
         afficherApplication();
-      }, 500); // laisser le temps au message de s'afficher avant de changer d'écran
+      }, 500);
+       zoneMessage.textContent = '';
     } else {
       zoneMessage.textContent = donnees.message;
     }
