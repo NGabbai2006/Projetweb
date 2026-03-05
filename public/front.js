@@ -1,6 +1,5 @@
 // variables globales
 let pseudoConnecte = null;
-let idConnecte = null;
 let personnaliteActuelle = null;
 let scoreActuel = 0;
 let numeroRound = 1;
@@ -43,21 +42,15 @@ btnConnexion.addEventListener('click', function() {
 
   fetch('/login', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json',
-           },
-  
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ V_log: pseudo, V_pass: motDePasse })
   })
   .then(function(reponse) { return reponse.json(); })
   .then(function(donnees) {
     if (donnees.tokenId) {
       pseudoConnecte = pseudo;
-      idConnecte = donnees.tokenId;
-      zoneMessage.textContent = 'Connexion réussie !'; 
-      setTimeout(() => {            // laisser le temps au message de s'afficher avant de changer d'écran
-        afficherApplication();
-      }, 500);
-       zoneMessage.textContent = '';
+      localStorage.setItem('tokenId', donnees.tokenId);
+      afficherApplication();
     } else {
       zoneMessage.textContent = donnees.message;
     }
@@ -69,10 +62,11 @@ btnConnexion.addEventListener('click', function() {
 btnDeconnexion.addEventListener('click', function() {
   fetch('/endgame', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + idConnecte
-     },
-    body: JSON.stringify({ id: idConnecte })
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + localStorage.getItem('tokenId')
+    },
+    body: JSON.stringify({})
   })
   .then(function(reponse) { return reponse.json(); })
   .then(function(donnees) {
@@ -80,7 +74,7 @@ btnDeconnexion.addEventListener('click', function() {
   });
 
   pseudoConnecte = null;
-  idConnecte = null;
+  localStorage.removeItem('tokenId');
   document.getElementById('mainApp').style.display = 'none';
   document.getElementById('authOverlay').style.display = 'flex';
   document.getElementById('startScreen').style.display = '';
@@ -109,10 +103,11 @@ btnJouer.addEventListener('click', function() {
 
   fetch('/startgame', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + idConnecte
-     },
-    body: JSON.stringify({ id: idConnecte })
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + localStorage.getItem('tokenId')
+    },
+    body: JSON.stringify({})
   })
   .then(function(reponse) { return reponse.json(); })
   .then(function(donnees) {
@@ -134,10 +129,11 @@ btnRejouer.addEventListener('click', function() {
 function terminerPartie() {
   fetch('/endgame', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + idConnecte
-     },
-    body: JSON.stringify({ id: idConnecte })
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + localStorage.getItem('tokenId')
+    },
+    body: JSON.stringify({})
   })
   .then(function(reponse) { return reponse.json(); })
   .then(function(donnees) {
@@ -162,9 +158,11 @@ function chargerProchaineCarte() {
 
   fetch('/quizz', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + idConnecte
-     }
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + localStorage.getItem('tokenId')
+    },
+    body: JSON.stringify({})
   })
   .then(function(reponse) { return reponse.json(); })
   .then(function(donnees) {
@@ -192,10 +190,11 @@ function repondre(valeurReponse) {
 
   fetch('/reponse', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + idConnecte
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + localStorage.getItem('tokenId')
     },
-    body: JSON.stringify({ idQuizz: personnaliteActuelle.id, reponse: valeurReponse, id: idConnecte })
+    body: JSON.stringify({ idQuizz: personnaliteActuelle.id, reponse: valeurReponse })
   })
   .then(function(reponse) { return reponse.json(); })
   .then(function(donnees) {
@@ -292,3 +291,21 @@ leaderboardToggle.addEventListener('click', function() {
     leaderboardToggle.style.right = '0';
   }
 });
+
+window.onload = () => {
+  fetch('/check', {
+    headers: { 'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + localStorage.getItem('tokenId')
+    } })
+    .then(reponse => reponse.json())
+    .then(data => {
+    if (data.data===true){
+    afficherApplication();
+  }
+  else{
+    return;
+  }
+})
+ 
+
+}
