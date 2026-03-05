@@ -8,7 +8,7 @@ const auth = require('./middleware/auth');
 
 
 const connection = mysql.createConnection({ // configuration de la connexion à la base de données
-  host: '172.29.16.241', //change ton ip 
+  host: '172.29.18.129', //changer ip
   user: 'Userweb',
   password: 'Userweb',
   database: 'ProjetWeb'
