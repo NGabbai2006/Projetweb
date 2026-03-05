@@ -192,11 +192,6 @@ app.post('/register', (req, res) => { // route POST pour /register
             res.status(500).json({ message: 'Erreur serveur lors de l\'inscription' });
           }
         }
-
-        else if (results.length === 0) {
-          res.json({ message: 'Merci d\'enregistrer vos identifiants' });
-          return;
-        }
         else {
           // ajout de l'user dans la table score car plus simple 
           connection.query(
