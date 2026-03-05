@@ -41,55 +41,7 @@ app.get('/Top100', (req, res) => { // route GET pour /scoreTab
 });
 
 
-//=========================================================================================================
-app.get('/quizz', (req, res) => { // route POST pour /quizz
-  let randomImage = 0;
-  connection.query('SELECT nom,chemin,id FROM Quizz', (err, results) => {
-    if (err) {
-      console.error('Erreur lors de la récupération du quizz :', err);
-      res.status(500).json({ message: 'Erreur serveur' });
 
-    }
-    function regenere() {
-      randomImage = Math.floor(Math.random() * results.length);
-       let saveId = results[randomImage].id;
-      connection.query('SELECT chemin,nom,attendre FROM Quizz WHERE id = ?',
-        [results[randomImage].id], (err, results) => {
-
-          if (err) {
-            console.error('Erreur lors de la récupération du quizz :', err);
-            res.status(500).json({ message: 'Erreur serveur' });
-
-          }
-          else if (results[0].attendre > 0) {
-            return regenere();
-          }
-          else {
-            let idTemp = crypto.randomBytes(16).toString('hex');
-            var stocker = {
-              chemin: results[0].chemin,
-              nom: results[0].nom,
-              id: idTemp
-            }
-            
-            connection.query('UPDATE Quizz SET idTemp = ? WHERE id = ?',
-              [idTemp, saveId], (err, results) => {
-                if (err) {
-                  console.error('Erreur lors de la mise à jour du quizz :', err);
-                  res.status(500).json({ message: 'Erreur serveur' });
-
-                }
-
-                console.log('quizz mis à jour avec succès');
-                res.json({ question: stocker });
-              });
-          }
-
-        });
-    }
-    regenere();
-  });
-});
 
 //=========================================================================================================
 // methode post 
@@ -103,10 +55,17 @@ app.post('/startgame', auth, (req, res) => { // route POST pour /startgame
         res.status(500).json({ message: 'Erreur serveur' });
 
       }
-      console.log('scoreTemp réinitialisés avec succès');
-      res.json({ message: 'reinitialisation effectuée' });
+      connection.query('DELETE FROM Session WHERE idUser = ?',
+        [req.auth.id], (err, results) => {
+          if (err) {
+            console.error('Erreur lors de la suppression de la session :', err);
+            res.status(500).json({ message: 'Erreur serveur' });
+            return;
+          }
+          console.log('scoreTemp réinitialisés avec succès');
+          res.json({ message: 'reinitialisation effectuée' });
+        });
     });
-
 }
 );
 
@@ -129,8 +88,19 @@ app.post('/endgame', auth, (req, res) => { // route POST pour /endgame
               res.status(500).json({ message: 'Erreur serveur' });
               return;
             }
-            console.log('score mis à jour avec succès');
-            res.json({ message: 'score mis à jour' });
+            else {
+              connection.query('DELETE FROM Session WHERE idUser = ?',
+                [req.auth.id], (err, results) => {
+                  if (err) {
+                    console.error('Erreur lors de la suppression de la session :', err);
+                    res.status(500).json({ message: 'Erreur serveur' });
+                    return;
+                  }
+
+                  console.log('score mis à jour avec succès');
+                  res.json({ message: 'score mis à jour' });
+                });
+            }
           });
       }
       // else if (results[0].winstreak < results[0].winstreakTemp) {
@@ -147,26 +117,115 @@ app.post('/endgame', auth, (req, res) => { // route POST pour /endgame
       //     })
       // }
       else {
-        res.json({ message: 'score non mis à jour' });
+
+        connection.query('DELETE FROM Session WHERE idUser = ?',
+          [req.auth.id], (err, results) => {
+            if (err) {
+              console.error('Erreur lors de la suppression de la session :', err);
+              res.status(500).json({ message: 'Erreur serveur' });
+              return;
+            }
+            res.json({ message: 'score non mis à jour' });
+
+          });
       }
     });
-});
+})
+
+
+
 
 
 //=========================================================================================================
-// route pour les reponses 
+// route pour les questions
+app.post('/quizz', auth, (req, res) => { // route POST pour /quizz
+  let randomImage = 0;
+  connection.query('SELECT id FROM Quizz', (err, results) => {
+    if (err) {
+      console.error('Erreur lors de la récupération du quizz :', err);
+      res.status(500).json({ message: 'Erreur serveur' });
 
+    }
+
+    function regenere() {
+      randomImage = Math.floor(Math.random() * results.length);
+      let saveId = results[randomImage].id;
+      connection.query('SELECT idUser, idQuizz FROM  Session WHERE idUser = ? AND idQuizz = ?', [req.auth.id, saveId], (err, results) => {
+        if (err) {
+          console.error('Erreur lors de la récupération du quizz :', err);
+          res.status(500).json({ message: 'Erreur serveur' });
+
+        }
+        else if (results.length === 0) {
+          connection.query('Insert INTO Session (idQuizz,idUser) VALUES (?,?) ',
+            [saveId, req.auth.id, saveId, req.auth.id], (err, results) => {
+              if (err) {
+                console.error('Erreur lors de la création de la session :', err);
+                res.status(500).json({ message: 'Erreur serveur' });
+
+              }
+
+              connection.query('SELECT Quizz.chemin,Quizz.nom,Session.attendre FROM Quizz, Session WHERE Quizz.id = ? AND Quizz.id = Session.idQuizz AND Session.idUser = ?',
+                [saveId, req.auth.id], (err, results) => {
+
+                  if (err) {
+                    console.error('Erreur lors de la récupération du quizz :', err);
+                    res.status(500).json({ message: 'Erreur serveur' });
+
+                  }
+                  else if (results[0].attendre > 0) {
+                    console.log('quizz en attente, génération d\'un nouveau quizz');
+                    return regenere();
+                  }
+                  else {
+                    let idTemp = crypto.randomBytes(16).toString('hex');
+                    var stocker = {
+                      chemin: results[0].chemin,
+                      nom: results[0].nom,
+                      id: idTemp
+                    }
+
+                    connection.query('UPDATE Session SET idTemp = ? WHERE idQuizz = ? AND idUser = ?',
+                      [idTemp, saveId, req.auth.id], (err, results) => {
+                        if (err) {
+                          console.error('Erreur lors de la mise à jour du quizz :', err);
+                          res.status(500).json({ message: 'Erreur serveur' });
+
+                        }
+
+                        console.log('quizz mis à jour avec succès');
+                        res.json({ question: stocker });
+                      });
+                  }
+
+                });
+            }
+
+          )
+
+        }
+        else {
+          return regenere();
+        }
+      })
+    }
+    regenere();
+  })
+})
+
+//=========================================================================================================
+// route pour les reponses 
 app.post('/reponse', auth, (req, res) => { // route GET pour /reponse
-  connection.query('SELECT attendre,reponse FROM Quizz WHERE idTemp = ?',
+  connection.query('SELECT Quizz.reponse FROM Quizz, Session WHERE Quizz.id = Session.idQuizz AND Session.idTemp = ?',
     [req.body.idQuizz], (err, results) => {
       if (err) {
         console.error('Erreur lors de la récupération de la réponse :', err);
         res.status(500).json({ message: 'Erreur serveur' });
-        
+
       }
       if (results.length === 0) {
         res.json({ message: 'Quizz introuvable' });
-        
+
       }
       else if (results[0].reponse == req.body.reponse) {
         connection.query('UPDATE Score SET pointsTemp = pointsTemp + 1 WHERE idUser = ?',
@@ -177,26 +236,26 @@ app.post('/reponse', auth, (req, res) => { // route GET pour /reponse
 
             }
             else {
-                connection.query('UPDATE Quizz SET attendre = 15, idTemp = 0 WHERE idTemp = ?',
-                  [req.body.idQuizz], (err, results) => {
-                    if (err) {
-                      console.error('Erreur lors de la mise à jour du quizz :', err);
-                      res.status(500).json({ message: 'Erreur serveur' });
+              connection.query('UPDATE Session SET attendre = 15, idTemp = 0 WHERE idTemp = ? AND idUser = ?',
+                [req.body.idQuizz, req.auth.id], (err, results) => {
+                  if (err) {
+                    console.error('Erreur lors de la mise à jour du quizz :', err);
+                    res.status(500).json({ message: 'Erreur serveur' });
 
-                    }
-                    else {
-                      connection.query('UPDATE Quizz SET attendre = attendre - 1 WHERE attendre !=0 AND idTemp != ?',
-                        [req.body.idQuizz], (err, results) => {
-                          if (err) {
-                            console.error('Erreur lors de la mise à jour du quizz :', err);
-                            res.status(500).json({ message: 'Erreur serveur' });
-                            
-                          }
-                        })
-                    }
-                    console.log('score mis à jour');
-                    res.json({ message: 'score mis à jour' });
-                  })
+                  }
+                  else {
+                    connection.query('UPDATE Session SET attendre = attendre - 1 WHERE attendre !=0 AND idTemp != ? AND idUser = ?',
+                      [req.body.idQuizz, req.auth.id], (err, results) => {
+                        if (err) {
+                          console.error('Erreur lors de la mise à jour du quizz :', err);
+                          res.status(500).json({ message: 'Erreur serveur' });
+
+                        }
+                      })
+                  }
+                  console.log('score mis à jour');
+                  res.json({ message: 'score mis à jour' });
+                })
             }
           });
       }
@@ -211,16 +270,16 @@ app.post('/reponse', auth, (req, res) => { // route GET pour /reponse
         //     }
         //   }
         // )
-        connection.query('UPDATE Quizz SET attendre = 10, idTemp= 0 WHERE idTemp = ?',
-          [req.body.idQuizz], (err, results) => {
+        connection.query('UPDATE Session SET attendre = 15, idTemp= 0 WHERE idTemp = ? AND idUser = ?',
+          [req.body.idQuizz, req.auth.id], (err, results) => {
             if (err) {
               console.error('Erreur lors de la mise à jour du quizz :', err);
               res.status(500).json({ message: 'Erreur serveur' });
 
             }
             else {
-              connection.query('UPDATE Quizz SET attendre = attendre - 1 WHERE attendre > 0 AND idTemp != ?',
-                [req.body.idQuizz], (err, results) => {
+              connection.query('UPDATE Session SET attendre = attendre - 1 WHERE attendre > 0 AND idTemp != ? AND idUser = ?',
+                [req.body.idQuizz, req.auth.id], (err, results) => {
                   if (err) {
                     console.error('Erreur lors de la mise à jour du quizz :', err);
                     res.status(500).json({ message: 'Erreur serveur' });
@@ -348,3 +407,4 @@ app.listen(2000, () => { // démarrage du serveur sur le port 2000
   let monIp = require("ip").address(); // récupération de l'adresse IP locale
   console.log(`Server running on http://${monIp}:2000`); // log de l'URL du serveur
 });
+
