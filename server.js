@@ -25,7 +25,18 @@ connection.connect((err) => {
 app.use(express.json());
 app.use(express.static('public'));
 
-
+app.get('/check',auth,(req,res) => {
+  connection.query('SELECT id FROM User WHERE id = ?',
+   [req.auth.id], (err,results) => {
+      if (err) {
+        console.error('Erreur lors de la verif du token :', err);
+        res.status(500).json({ message: 'Erreur serveur' });
+      }
+      else {
+        res.json({data : true})
+      }
+  
+})})
 
 //=========================================================================================================
 
@@ -411,6 +422,7 @@ app.post('/login', (req, res) => { // route POST pour /login
       attHache();  
     });
 });
+
 
 
 //=========================================================================================================
