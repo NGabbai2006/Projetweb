@@ -15,7 +15,6 @@ const btnOui = document.getElementById('btnOui');
 const btnNon = document.getElementById('btnNon');
 const leaderboardToggle = document.getElementById('leaderboardToggle');
 
-
 // envoi du formulaire d'inscription vers POST /register
 btnInscription.addEventListener('click', function() {
   const pseudo = document.getElementById('regUser').value;
@@ -296,18 +295,18 @@ leaderboardToggle.addEventListener('click', function() {
 
 window.onload = () => {
   fetch('/check', {
-    headers: { 'Content-Type': 'application/json',
+    headers: {
+      'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + localStorage.getItem('tokenId')
-    } })
-    .then(reponse => reponse.json())
-    .then(data => {
-    if (data.data===true){
-    afficherApplication();
-  }
-  else{
-    return;
-  }
-})
- 
-
+    }
+  })
+  .then(reponse => reponse.json())
+  .then(data => {
+    if (data.data === true) {
+      pseudoConnecte = localStorage.getItem('pseudo');
+      afficherApplication();
+    } else {
+      return;
+    }
+  });
 }
