@@ -50,6 +50,7 @@ btnConnexion.addEventListener('click', function() {
     if (donnees.tokenId) {
       pseudoConnecte = pseudo;
       localStorage.setItem('tokenId', donnees.tokenId);
+      localStorage.setItem('pseudo', pseudo);
       afficherApplication();
     } else {
       zoneMessage.textContent = donnees.message;
@@ -75,6 +76,7 @@ btnDeconnexion.addEventListener('click', function() {
 
   pseudoConnecte = null;
   localStorage.removeItem('tokenId');
+  localStorage.removeItem('pseudo');
   document.getElementById('mainApp').style.display = 'none';
   document.getElementById('authOverlay').style.display = 'flex';
   document.getElementById('startScreen').style.display = '';
