@@ -5,12 +5,12 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const auth = require('./middleware/auth');
-
+require('dotenv').config();
 
 const connection = mysql.createConnection({ // configuration de la connexion à la base de données
-  host: '192.168.1.77', //changer ip
-  user: 'Userweb',
-  password: 'Userweb',
+  host: '172.29.16.241', //changer ip
+  user: process.env.LoginBDD,
+  password: process.env.PasswordBDD,
   database: 'ProjetWeb'
 });
 
@@ -25,18 +25,19 @@ connection.connect((err) => {
 app.use(express.json());
 app.use(express.static('public'));
 
-app.get('/check',auth,(req,res) => {
+app.get('/check', auth, (req, res) => {
   connection.query('SELECT id FROM User WHERE id = ?',
-   [req.auth.id], (err,results) => {
+    [req.auth.id], (err, results) => {
       if (err) {
         console.error('Erreur lors de la verif du token :', err);
         res.status(500).json({ message: 'Erreur serveur' });
       }
       else {
-        res.json({data : true})
+        res.json({ data: true })
       }
-  
-})})
+
+    })
+})
 
 //=========================================================================================================
 
@@ -230,7 +231,7 @@ app.post('/quizz', auth, (req, res) => { // route POST pour /quizz
     }
     regenere();
   });
-  
+
 })
 
 
@@ -257,7 +258,7 @@ app.post('/reponse', auth, (req, res) => { // route GET pour /reponse
 
             }
             else {
-              connection.query('UPDATE Session SET attendre = 15, idTemp = 0 WHERE idTemp = ? AND idUser = ?',
+              connection.query('UPDATE Session SET attendre = 20, idTemp = 0 WHERE idTemp = ? AND idUser = ?',
                 [req.body.idQuizz, req.auth.id], (err, results) => {
                   if (err) {
                     console.error('Erreur lors de la mise à jour du quizz :', err);
@@ -291,7 +292,7 @@ app.post('/reponse', auth, (req, res) => { // route GET pour /reponse
         //     }
         //   }
         // )
-        connection.query('UPDATE Session SET attendre = 15, idTemp= 0 WHERE idTemp = ? AND idUser = ?',
+        connection.query('UPDATE Session SET attendre = 20, idTemp= 0 WHERE idTemp = ? AND idUser = ?',
           [req.body.idQuizz, req.auth.id], (err, results) => {
             if (err) {
               console.error('Erreur lors de la mise à jour du quizz :', err);
@@ -323,48 +324,55 @@ app.post('/reponse', auth, (req, res) => { // route GET pour /reponse
 app.post('/register', (req, res) => { // route POST pour /register
 
   async function reloadRegister() {
+
     if (req.body.V_log.length < 4) {
+      console.log('login trop court');
       res.json({ message: 'Le login doit contenir au moins 4 caractères' });
-
+  
     }
-    if (req.body.V_pass.length < 8) {
+    else if (req.body.V_pass.length < 8) {
+      console.log('mdp trop court');
       res.json({ message: 'Le mot de passe doit contenir au moins 8 caractères' });
-
+      
     }
+    else{
     let hache = await bcrypt.hash(req.body.V_pass, 10);
+      connection.query(
+        'INSERT INTO User (login, password) VALUES (?,?)',
+        [req.body.V_log, hache],
+        (err, results) => {
+          if (err) {
+            if (err.code === 'ER_DUP_ENTRY') {
+              console.error('Erreur: login déjà utilisé :', err);
+              return res.status(400).json({ message: 'Login déjà utilisé' });
 
-    connection.query(
-      'INSERT INTO User (login, password) VALUES (?,?)',
-      [req.body.V_log, hache],
-      (err, results) => {
-        if (err) {
-          if (err.code === 'ER_DUP_ENTRY') {
-            console.error('Erreur: login déjà utilisé :', err);
-            return res.status(400).json({ message: 'Login déjà utilisé' });
-
+            }
+            else {
+              console.error('erreur lors de de l\'inscription :', err);
+              res.status(500).json({ message: 'Erreur serveur lors de l\'inscription' });
+            }
           }
           else {
-            console.error('erreur lors de de l\'inscription :', err);
-            res.status(500).json({ message: 'Erreur serveur lors de l\'inscription' });
-          }
-        }
-        else {
-          // ajout de l'user dans la table score car plus simple 
-          connection.query(
-            'INSERT INTO Score (idUser) VALUES (?)',
-            [results.insertId],
-            (err, resultsScore) => {
-              if (err) {
-                console.error('Erreur lors de l\'insertion dans la table Score :', err);
-                res.status(500).json({ message: 'Erreur serveur lors de l\'insertion du score' });
+            // ajout de l'user dans la table score car plus simple 
+            connection.query(
+              'INSERT INTO Score (idUser) VALUES (?)',
+              [results.insertId],
+              (err, resultsScore) => {
+                if (err) {
+                  console.error('Erreur lors de l\'insertion dans la table Score :', err);
+                  res.status(500).json({ message: 'Erreur serveur lors de l\'insertion du score' });
 
+                }
+                console.log('Insertion réussie, ID utilisateur :', results.insertId);
+                res.json({ message: 'Inscription réussie !' });
               }
-              console.log('Insertion réussie, ID utilisateur :', results.insertId);
-              res.json({ message: 'Inscription réussie !' });
-            }
-          );
-        }
-      });
+            );
+          }
+        });
+
+    }
+
+
 
   }
   reloadRegister();
@@ -391,35 +399,35 @@ app.post('/login', (req, res) => { // route POST pour /login
         }
         else if (results.length === 0) {
           res.json({ message: 'Identifiants invalides' });
-          
+
         }
 
         else {
-        
-        let hache = await bcrypt.compare(req.body.V_pass, results[0].password);
-        if (hache) {
-          console.log('Connexion réussie pour l\'utilisateur :', results[0].login);
 
-          res.json({
-            message: 'Connexion réussie ',
-            tokenId: jwt.sign({
-              id: results[0].id
-            },
-              'KeyProjetWeb',
-              { expiresIn: '2h' })
-          });
+          let hache = await bcrypt.compare(req.body.V_pass, results[0].password);
+          if (hache) {
+            console.log('Connexion réussie pour l\'utilisateur :', results[0].login);
+
+            res.json({
+              message: 'Connexion réussie ',
+              tokenId: jwt.sign({
+                id: results[0].id
+              },
+                process.env.SecretJWT,
+                { expiresIn: '2h' })
+            });
+          }
+
+          else {
+            console.log('Mot de passe incorrect ou identifiants incorrect');
+            res.json({
+              message: 'Identifiants invalides merci de saisir des identifiants valide'
+            });
+          }
         }
 
-        else {
-          console.log('Mot de passe incorrect ou identifiants incorrect');
-          res.json({
-            message: 'Identifiants invalides merci de saisir des identifiants valide'
-          });
-        }
       }
-      
-        }
-      attHache();  
+      attHache();
     });
 });
 
