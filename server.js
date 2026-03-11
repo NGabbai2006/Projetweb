@@ -31,9 +31,11 @@ app.get('/check', auth, (req, res) => {
       if (err) {
         console.error('Erreur lors de la verif du token :', err);
         res.status(500).json({ message: 'Erreur serveur' });
+        return;
       }
       else {
         res.json({ data: true })
+        return;
       }
 
     })
@@ -47,8 +49,10 @@ app.get('/Top100', (req, res) => { // route GET pour /scoreTab
       if (err) {
         console.error('Erreur lors de la récupération du classement :', err);
         res.status(500).json({ message: 'Erreur serveur' });
+        return;
       }
       res.json(results);
+      return;
     });
 });
 
@@ -65,7 +69,7 @@ app.post('/startgame', auth, (req, res) => { // route POST pour /startgame
       if (err) {
         console.error('Erreur lors de la réinitialisation du scoreTemp :', err);
         res.status(500).json({ message: 'Erreur serveur' });
-
+        return;
       }
       connection.query('DELETE FROM Session WHERE idUser = ?',
         [req.auth.id], (err, results) => {
@@ -76,6 +80,7 @@ app.post('/startgame', auth, (req, res) => { // route POST pour /startgame
           }
           console.log('scoreTemp réinitialisés avec succès');
           res.json({ message: 'reinitialisation effectuée' });
+          return;
         });
     });
 }
@@ -90,6 +95,7 @@ app.post('/endgame', auth, (req, res) => { // route POST pour /endgame
       if (err) {
         console.error('Erreur lors de la récupération du score :', err);
         res.status(500).json({ message: 'Erreur serveur' });
+        return;
 
       }
       else if (results[0].points < results[0].pointsTemp) {
@@ -111,6 +117,7 @@ app.post('/endgame', auth, (req, res) => { // route POST pour /endgame
 
                   console.log('score mis à jour avec succès');
                   res.json({ message: 'score mis à jour' });
+                  return;
                 });
             }
           });
@@ -138,7 +145,7 @@ app.post('/endgame', auth, (req, res) => { // route POST pour /endgame
               return;
             }
             res.json({ message: 'score non mis à jour' });
-
+            return;
           });
       }
     });
@@ -156,17 +163,17 @@ app.post('/quizz', auth, (req, res) => { // route POST pour /quizz
     if (err) {
       console.error('Erreur lors de la récupération du quizz :', err);
       res.status(500).json({ message: 'Erreur serveur' });
-
+      return;
     }
-
+    var nbQuizz = results.length;
     function regenere() {
-      randomImage = Math.floor(Math.random() * results.length);
+      randomImage = Math.floor(Math.random() * nbQuizz);
       let saveId = results[randomImage].id;
       connection.query('SELECT idUser, idQuizz FROM  Session WHERE idUser = ? AND idQuizz = ?', [req.auth.id, saveId], (err, results) => {
         if (err) {
           console.error('Erreur lors de la récupération du quizz :', err);
           res.status(500).json({ message: 'Erreur serveur' });
-
+          return;
         }
         else if (results.length === 0) {
           connection.query('Insert INTO Session (idQuizz,idUser) VALUES (?,?) ',
@@ -174,6 +181,7 @@ app.post('/quizz', auth, (req, res) => { // route POST pour /quizz
               if (err) {
                 console.error('Erreur lors de la création de la session :', err);
                 res.status(500).json({ message: 'Erreur serveur' });
+                return;
 
               }
 
@@ -183,12 +191,14 @@ app.post('/quizz', auth, (req, res) => { // route POST pour /quizz
                   if (err) {
                     console.error('Erreur lors de la récupération du quizz :', err);
                     res.status(500).json({ message: 'Erreur serveur' });
+                    return;
 
                   }
                   else if (results[0].attendre > 0) {
                     console.log('quizz en attente, génération d\'un nouveau quizz');
                     return regenere();
                   }
+                  
                   else {
                     let idTemp = crypto.randomBytes(16).toString('hex');
                     var stocker = {
@@ -200,6 +210,7 @@ app.post('/quizz', auth, (req, res) => { // route POST pour /quizz
                       if (err) {
                         console.error('Erreur lors de la suppression des sessions :', err);
                         res.status(500).json({ message: 'Erreur serveur' });
+                        return;
 
                       }
                       connection.query('UPDATE Session SET idTemp = ? WHERE idQuizz = ? AND idUser = ?',
@@ -207,11 +218,13 @@ app.post('/quizz', auth, (req, res) => { // route POST pour /quizz
                           if (err) {
                             console.error('Erreur lors de la mise à jour du quizz :', err);
                             res.status(500).json({ message: 'Erreur serveur' });
+                            return;
 
                           }
 
                           console.log('quizz mis à jour avec succès');
                           res.json({ question: stocker });
+                          return;
                         });
                     })
 
@@ -243,10 +256,12 @@ app.post('/reponse', auth, (req, res) => { // route GET pour /reponse
       if (err) {
         console.error('Erreur lors de la récupération de la réponse :', err);
         res.status(500).json({ message: 'Erreur serveur' });
+        return;
 
       }
       if (results.length === 0) {
         res.json({ message: 'Quizz introuvable' });
+        return;
 
       }
       else if (results[0].reponse == req.body.reponse) {
@@ -255,6 +270,7 @@ app.post('/reponse', auth, (req, res) => { // route GET pour /reponse
             if (err) {
               console.error('Erreur lors de la mise à jour du score :', err);
               res.status(500).json({ message: 'Erreur serveur' });
+              return;
 
             }
             else {
@@ -263,6 +279,7 @@ app.post('/reponse', auth, (req, res) => { // route GET pour /reponse
                   if (err) {
                     console.error('Erreur lors de la mise à jour du quizz :', err);
                     res.status(500).json({ message: 'Erreur serveur' });
+                    return;
 
                   }
                   else {
@@ -271,12 +288,14 @@ app.post('/reponse', auth, (req, res) => { // route GET pour /reponse
                         if (err) {
                           console.error('Erreur lors de la mise à jour du quizz :', err);
                           res.status(500).json({ message: 'Erreur serveur' });
+                          return;
 
                         }
                       })
                   }
                   console.log('score mis à jour');
                   res.json({ message: 'score mis à jour' });
+                  return;
                 })
             }
           });
@@ -297,6 +316,7 @@ app.post('/reponse', auth, (req, res) => { // route GET pour /reponse
             if (err) {
               console.error('Erreur lors de la mise à jour du quizz :', err);
               res.status(500).json({ message: 'Erreur serveur' });
+              return;
 
             }
             else {
@@ -305,10 +325,12 @@ app.post('/reponse', auth, (req, res) => { // route GET pour /reponse
                   if (err) {
                     console.error('Erreur lors de la mise à jour du quizz :', err);
                     res.status(500).json({ message: 'Erreur serveur' });
+                    return;
 
                   }
                   console.log('mauvaise réponse');
                   res.json({ message: 'mauvaise réponse', stop: true });
+                  return;
                 }
 
               )
@@ -322,60 +344,81 @@ app.post('/reponse', auth, (req, res) => { // route GET pour /reponse
 //route d'inscription
 //tokenid n'est pas vraiment un token juste un id dure a trouver
 app.post('/register', (req, res) => { // route POST pour /register
+  if (req.body === undefined) {
+    res.json({ message: 'aucun donnée recu' });
+    return;
+  }
+  else {
+    async function reloadRegister() {
+      if (req.body.V_log.length < 4) {
+        console.log('login trop court');
+        res.json({ message: 'Le login doit contenir au moins 4 caractères' });
+        return;
 
-  async function reloadRegister() {
+      }
+      else if (req.body.V_log.length > 20) {
+        console.log('login trop long');
+        res.json({ message: 'Le login ne doit pas dépasser 20 caractères' });
+        return;
+      }
+      else if (req.body.V_pass.length > 30) {
+        console.log('mdp trop long');
+        res.json({ message: 'Le mot de passe ne doit pas dépasser 30 caractères' });
+        return;
+      }
+      else if (req.body.V_pass.length < 8) {
+        console.log('mdp trop court');
+        res.json({ message: 'Le mot de passe doit contenir au moins 8 caractères' });
+        return;
+      }
+      else {
+        let hache = await bcrypt.hash(req.body.V_pass, 10);
+        connection.query(
+          'INSERT INTO User (login, password) VALUES (?,?)',
+          [req.body.V_log, hache],
+          (err, results) => {
+            if (err) {
+              if (err.code === 'ER_DUP_ENTRY') {
+                console.error('Erreur: login déjà utilisé :', err);
+                return res.status(400).json({ message: 'Login déjà utilisé' });
 
-    if (req.body.V_log.length < 4) {
-      console.log('login trop court');
-      res.json({ message: 'Le login doit contenir au moins 4 caractères' });
-  
-    }
-    else if (req.body.V_pass.length < 8) {
-      console.log('mdp trop court');
-      res.json({ message: 'Le mot de passe doit contenir au moins 8 caractères' });
-      
-    }
-    else{
-    let hache = await bcrypt.hash(req.body.V_pass, 10);
-      connection.query(
-        'INSERT INTO User (login, password) VALUES (?,?)',
-        [req.body.V_log, hache],
-        (err, results) => {
-          if (err) {
-            if (err.code === 'ER_DUP_ENTRY') {
-              console.error('Erreur: login déjà utilisé :', err);
-              return res.status(400).json({ message: 'Login déjà utilisé' });
-
+              }
+              else {
+                console.error('erreur lors de de l\'inscription :', err);
+                res.status(500).json({ message: 'Erreur serveur lors de l\'inscription' });
+                return;
+              }
             }
             else {
-              console.error('erreur lors de de l\'inscription :', err);
-              res.status(500).json({ message: 'Erreur serveur lors de l\'inscription' });
-            }
-          }
-          else {
-            // ajout de l'user dans la table score car plus simple 
-            connection.query(
-              'INSERT INTO Score (idUser) VALUES (?)',
-              [results.insertId],
-              (err, resultsScore) => {
-                if (err) {
-                  console.error('Erreur lors de l\'insertion dans la table Score :', err);
-                  res.status(500).json({ message: 'Erreur serveur lors de l\'insertion du score' });
+              // ajout de l'user dans la table score car plus simple 
+              connection.query(
+                'INSERT INTO Score (idUser) VALUES (?)',
+                [results.insertId],
+                (err, resultsScore) => {
+                  if (err) {
+                    console.error('Erreur lors de l\'insertion dans la table Score :', err);
+                    res.status(500).json({ message: 'Erreur serveur lors de l\'insertion du score' });
+                    return;
 
+                  }
+                  console.log('Insertion réussie, ID utilisateur :', results.insertId);
+                  res.json({ message: 'Inscription réussie !' });
+                  return;
                 }
-                console.log('Insertion réussie, ID utilisateur :', results.insertId);
-                res.json({ message: 'Inscription réussie !' });
-              }
-            );
-          }
-        });
+              );
+            }
+          });
+
+      }
+
+
 
     }
-
-
-
+    reloadRegister();
   }
-  reloadRegister();
+
+
+
 });
 
 
@@ -384,51 +427,69 @@ app.post('/register', (req, res) => { // route POST pour /register
 //=========================================================================================================
 // route de connexion
 app.post('/login', (req, res) => { // route POST pour /login
-  console.log('Données recues pour la connexion'); // log dans la console
-  console.log(req.body);
 
-  connection.query(
-    'SELECT * FROM User WHERE login = ?',
-    [req.body.V_log],
-    (err, results) => {
-      async function attHache() {
-        if (err) {
-          console.error('Erreur lors de la vérification des identifiants :', err);
-          res.status(500).json({ message: 'Erreur serveur' });
+  if (req.body === undefined) {
+    res.json({ message: 'aucun donnée recu' });
+    return;
+  }
+  else {
+    console.log('Données recues pour la connexion'); // log dans la console
+    console.log(req.body);
 
-        }
-        else if (results.length === 0) {
-          res.json({ message: 'Identifiants invalides' });
+    connection.query(
+      'SELECT * FROM User WHERE login = ?',
+      [req.body.V_log],
+      (err, results) => {
+        async function attHache() {
+          if (err) {
+            console.error('Erreur lors de la vérification des identifiants :', err);
+            res.status(500).json({ message: 'Erreur serveur' });
+            return;
 
-        }
+          }
+          else if (results.length === 0) {
+            res.json({ message: 'Identifiants invalides' });
+            return;
 
-        else {
-
-          let hache = await bcrypt.compare(req.body.V_pass, results[0].password);
-          if (hache) {
-            console.log('Connexion réussie pour l\'utilisateur :', results[0].login);
-
-            res.json({
-              message: 'Connexion réussie ',
-              tokenId: jwt.sign({
-                id: results[0].id
-              },
-                process.env.SecretJWT,
-                { expiresIn: '2h' })
-            });
           }
 
           else {
-            console.log('Mot de passe incorrect ou identifiants incorrect');
-            res.json({
-              message: 'Identifiants invalides merci de saisir des identifiants valide'
-            });
-          }
-        }
 
+            let hache = await bcrypt.compare(req.body.V_pass, results[0].password);
+            if (hache) {
+              console.log('Connexion réussie pour l\'utilisateur :', results[0].login);
+
+              res.json({
+                message: 'Connexion réussie ',
+                tokenId: jwt.sign({
+                  id: results[0].id
+                },
+                  process.env.SecretJWT,
+                  { expiresIn: '2h' })
+              });
+              return;
+            }
+
+            else {
+              console.log('Mot de passe incorrect ou identifiants incorrect');
+              res.json({
+                message: 'Identifiants invalides merci de saisir des identifiants valide'
+              });
+              return;
+            }
+          }
+
+
+
+
+
+        }
+        attHache();
       }
-      attHache();
-    });
+
+  )
+    
+  };
 });
 
 
