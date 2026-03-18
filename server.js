@@ -98,6 +98,7 @@ app.post('/endgame', auth, (req, res) => { // route POST pour /endgame
         return;
 
       }
+      
       else if (results[0].points < results[0].pointsTemp) {
         connection.query('UPDATE Score SET points = pointsTemp, pointsTemp = 0 WHERE idUser = ?',
           [req.auth.id], (err, results) => {
@@ -159,6 +160,21 @@ app.post('/endgame', auth, (req, res) => { // route POST pour /endgame
 // route pour les questions
 app.post('/quizz', auth, (req, res) => { // route POST pour /quizz
   let randomImage = 0;
+  connection.query('SELECT login FROM User WHERE id = ?',
+    [req.auth.id], (err, results) => {
+      if (err) {
+        console.error('Erreur lors de la récupération du login :', err);
+        res.status(500).json({ message: 'Erreur serveur' });
+        return;
+      }
+      else if (results.length === 0) {
+        res.json({ message: 'Utilisateur introuvable' });
+        return;
+      }
+      else {
+        var pseudo= results[0].login;
+      }
+    
   connection.query('SELECT id FROM Quizz', (err, results) => {
     if (err) {
       console.error('Erreur lors de la récupération du quizz :', err);
@@ -222,7 +238,7 @@ app.post('/quizz', auth, (req, res) => { // route POST pour /quizz
 
                           }
 
-                          console.log('quizz mis à jour avec succès');
+                          console.log('quizz mis à jour avec succès pour l\'utilisateur :', pseudo);
                           res.json({ question: stocker });
                           return;
                         });
@@ -243,7 +259,8 @@ app.post('/quizz', auth, (req, res) => { // route POST pour /quizz
 
     }
     regenere();
-  });
+  })
+});
 
 })
 
