@@ -449,9 +449,7 @@ app.post('/login', (req, res) => { // route POST pour /login
     res.json({ message: 'aucun donnée recu' });
     return;
   }
-  else {
-    console.log('Données recues pour la connexion'); // log dans la console
-    console.log(req.body);
+  else { 
 
     connection.query(
       'SELECT * FROM User WHERE login = ?',
