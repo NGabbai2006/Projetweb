@@ -43,7 +43,7 @@ app.get('/check', auth, (req, res) => {
 
 //=========================================================================================================
 
-app.get('/Top100', (req, res) => { // route GET pour /scoreTab
+app.get('/Top100',auth, (req, res) => { // route GET pour /scoreTab
   connection.query('SELECT User.login, Score.points FROM Score,User WHERE Score.idUser = User.id ORDER BY points DESC LIMIT 100',
     (err, results) => {
       if (err) {
