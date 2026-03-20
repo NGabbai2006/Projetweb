@@ -361,7 +361,7 @@ app.post('/reponse', auth, (req, res) => { // route GET pour /reponse
 //route d'inscription
 //tokenid n'est pas vraiment un token juste un id dure a trouver
 app.post('/register', (req, res) => { // route POST pour /register
-  if (req.body === undefined) {
+  if (req.body === undefined || req.body.V_log === undefined || req.body.V_pass === undefine) {
     res.json({ message: 'aucun donnée recu' });
     return;
   }
@@ -445,7 +445,7 @@ app.post('/register', (req, res) => { // route POST pour /register
 // route de connexion
 app.post('/login', (req, res) => { // route POST pour /login
 
-  if (req.body === undefined) {
+  if (req.body === undefined || req.body.V_log === undefined || req.body.V_pass === undefined) {
     res.json({ message: 'aucun donnée recu' });
     return;
   }
