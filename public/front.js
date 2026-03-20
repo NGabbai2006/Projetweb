@@ -16,7 +16,7 @@ const btnNon = document.getElementById('btnNon');
 const leaderboardToggle = document.getElementById('leaderboardToggle');
 
 // envoi du formulaire d'inscription vers POST /register
-btnInscription.addEventListener('click', function() {
+btnInscription.addEventListener('click', function () {
   const pseudo = document.getElementById('regUser').value;
   const motDePasse = document.getElementById('regPass').value;
   const zoneMessage = document.getElementById('registerMsg');
@@ -26,15 +26,15 @@ btnInscription.addEventListener('click', function() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ V_log: pseudo, V_pass: motDePasse })
   })
-  .then(function(reponse) { return reponse.json(); })
-  .then(function(donnees) {
-    zoneMessage.textContent = donnees.message;
-  });
+    .then(function (reponse) { return reponse.json(); })
+    .then(function (donnees) {
+      zoneMessage.textContent = donnees.message;
+    });
 });
 
 
 // envoi du formulaire de connexion vers POST /login
-btnConnexion.addEventListener('click', function() {
+btnConnexion.addEventListener('click', function () {
   const pseudo = document.getElementById('loginUser').value;
   const motDePasse = document.getElementById('loginPass').value;
   const zoneMessage = document.getElementById('loginMsg');
@@ -44,22 +44,22 @@ btnConnexion.addEventListener('click', function() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ V_log: pseudo, V_pass: motDePasse })
   })
-  .then(function(reponse) { return reponse.json(); })
-  .then(function(donnees) {
-    if (donnees.tokenId) {
-      pseudoConnecte = pseudo;
-      localStorage.setItem('tokenId', donnees.tokenId);
-      localStorage.setItem('pseudo', pseudo);
-      afficherApplication();
-    } else {
-      zoneMessage.textContent = donnees.message;
-    }
-  });
+    .then(function (reponse) { return reponse.json(); })
+    .then(function (donnees) {
+      if (donnees.tokenId) {
+        pseudoConnecte = pseudo;
+        localStorage.setItem('tokenId', donnees.tokenId);
+        localStorage.setItem('pseudo', pseudo);
+        afficherApplication();
+      } else {
+        zoneMessage.textContent = donnees.message;
+      }
+    });
 });
 
 
 // déconnexion
-btnDeconnexion.addEventListener('click', function() {
+btnDeconnexion.addEventListener('click', function () {
   fetch('/endgame', {
     method: 'POST',
     headers: {
@@ -68,10 +68,10 @@ btnDeconnexion.addEventListener('click', function() {
     },
     body: JSON.stringify({})
   })
-  .then(function(reponse) { return reponse.json(); })
-  .then(function(donnees) {
-    console.log(donnees.message);
-  });
+    .then(function (reponse) { return reponse.json(); })
+    .then(function (donnees) {
+      console.log(donnees.message);
+    });
 
   pseudoConnecte = null;
   localStorage.removeItem('tokenId');
@@ -86,15 +86,30 @@ btnDeconnexion.addEventListener('click', function() {
 
 // on cache le pop-up et on affiche l'application principale
 function afficherApplication() {
-  document.getElementById('authOverlay').style.display = 'none';
-  document.getElementById('mainApp').style.display = 'block';
-  document.getElementById('displayUsername').textContent = pseudoConnecte;
-  chargerClassement();
-}
+  fetch('/check', {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + localStorage.getItem('tokenId')
+    }
+  })
+    .then(reponse => reponse.json())
+    .then(data => {
+      if (data.data === true) {
+        document.getElementById('authOverlay').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        document.getElementById('displayUsername').textContent = pseudoConnecte;
+        chargerClassement();
+      }
+      else {
+        return;
+
+      }
+    })
+};
 
 
 // lancement du jeu
-btnJouer.addEventListener('click', function() {
+btnJouer.addEventListener('click', function () {
   document.getElementById('startScreen').style.display = 'none';
   document.getElementById('cardScreen').style.display = 'flex';
 
@@ -110,17 +125,17 @@ btnJouer.addEventListener('click', function() {
     },
     body: JSON.stringify({})
   })
-  .then(function(reponse) { return reponse.json(); })
-  .then(function(donnees) {
-    console.log(donnees.message);
-  });
+    .then(function (reponse) { return reponse.json(); })
+    .then(function (donnees) {
+      console.log(donnees.message);
+    });
 
   chargerProchaineCarte();
 });
 
 
 // rejouer depuis l'écran de fin
-btnRejouer.addEventListener('click', function() {
+btnRejouer.addEventListener('click', function () {
   document.getElementById('finScreen').style.display = 'none';
   document.getElementById('startScreen').style.display = '';
 });
@@ -136,11 +151,11 @@ function terminerPartie() {
     },
     body: JSON.stringify({})
   })
-  .then(function(reponse) { return reponse.json(); })
-  .then(function(donnees) {
-    console.log(donnees.message);
-    chargerClassement();
-  });
+    .then(function (reponse) { return reponse.json(); })
+    .then(function (donnees) {
+      console.log(donnees.message);
+      chargerClassement();
+    });
 
   document.getElementById('cardScreen').style.display = 'none';
   document.getElementById('scoreFinal').textContent = scoreActuel;
@@ -165,21 +180,21 @@ function chargerProchaineCarte() {
     },
     body: JSON.stringify({})
   })
-  .then(function(reponse) { return reponse.json(); })
-  .then(function(donnees) {
-    personnaliteActuelle = donnees.question;
+    .then(function (reponse) { return reponse.json(); })
+    .then(function (donnees) {
+      personnaliteActuelle = donnees.question;
 
-    document.getElementById('cardName').textContent = donnees.question.nom;
+      document.getElementById('cardName').textContent = donnees.question.nom;
 
-    if (donnees.question.chemin) {
-      document.getElementById('cardPhoto').src = donnees.question.chemin;
-      document.getElementById('cardPhoto').style.display = 'block';
-      document.getElementById('cardPhotoPlaceholder').style.display = 'none';
-    } else {
-      document.getElementById('cardPhoto').style.display = 'none';
-      document.getElementById('cardPhotoPlaceholder').style.display = 'flex';
-    }
-  });
+      if (donnees.question.chemin) {
+        document.getElementById('cardPhoto').src = donnees.question.chemin;
+        document.getElementById('cardPhoto').style.display = 'block';
+        document.getElementById('cardPhotoPlaceholder').style.display = 'none';
+      } else {
+        document.getElementById('cardPhoto').style.display = 'none';
+        document.getElementById('cardPhotoPlaceholder').style.display = 'flex';
+      }
+    });
 }
 
 
@@ -197,54 +212,54 @@ function repondre(valeurReponse) {
     },
     body: JSON.stringify({ idQuizz: personnaliteActuelle.id, reponse: valeurReponse })
   })
-  .then(function(reponse) { return reponse.json(); })
-  .then(function(donnees) {
+    .then(function (reponse) { return reponse.json(); })
+    .then(function (donnees) {
 
-    // on déduit la vraie réponse pour afficher le bon tampon
-    let vraiReponse;
-    if (donnees.message == 'score mis à jour') {
-      vraiReponse = valeurReponse;
-    } else {
-      vraiReponse = (valeurReponse == 1) ? 0 : 1;
-    }
+      // on déduit la vraie réponse pour afficher le bon tampon
+      let vraiReponse;
+      if (donnees.message == 'score mis à jour') {
+        vraiReponse = valeurReponse;
+      } else {
+        vraiReponse = (valeurReponse == 1) ? 0 : 1;
+      }
 
-    if (vraiReponse == 1) {
-      document.getElementById('cardStamp').textContent = 'MENTIONNÉ';
-      document.getElementById('cardStamp').className = 'card-stamp mentioned';
-    } else {
-      document.getElementById('cardStamp').textContent = 'ABSENT';
-      document.getElementById('cardStamp').className = 'card-stamp clean';
-    }
+      if (vraiReponse == 1) {
+        document.getElementById('cardStamp').textContent = 'MENTIONNÉ';
+        document.getElementById('cardStamp').className = 'card-stamp mentioned';
+      } else {
+        document.getElementById('cardStamp').textContent = 'ABSENT';
+        document.getElementById('cardStamp').className = 'card-stamp clean';
+      }
 
-    if (donnees.message == 'score mis à jour') {
-      scoreActuel++;
-      document.getElementById('scoreActuel').textContent = scoreActuel;
-      document.getElementById('resultFeedback').textContent = '✓ BONNE RÉPONSE';
-      document.getElementById('resultFeedback').className = 'feedback-ok';
-    } else {
-      document.getElementById('resultFeedback').textContent = '✗ MAUVAISE RÉPONSE';
-      document.getElementById('resultFeedback').className = 'feedback-erreur';
-    }
+      if (donnees.message == 'score mis à jour') {
+        scoreActuel++;
+        document.getElementById('scoreActuel').textContent = scoreActuel;
+        document.getElementById('resultFeedback').textContent = '✓ BONNE RÉPONSE';
+        document.getElementById('resultFeedback').className = 'feedback-ok';
+      } else {
+        document.getElementById('resultFeedback').textContent = '✗ MAUVAISE RÉPONSE';
+        document.getElementById('resultFeedback').className = 'feedback-erreur';
+      }
 
-    numeroRound++;
+      numeroRound++;
 
-    // le back signale la fin de partie avec stop: true
-    if (donnees.stop == true) {
-      setTimeout(function() {
-        terminerPartie();
-      }, 1800);
-    } else {
-      setTimeout(function() {
-        chargerProchaineCarte();
-      }, 1800);
-    }
+      // le back signale la fin de partie avec stop: true
+      if (donnees.stop == true) {
+        setTimeout(function () {
+          terminerPartie();
+        }, 1800);
+      } else {
+        setTimeout(function () {
+          chargerProchaineCarte();
+        }, 1800);
+      }
 
-    chargerClassement();
-  });
+      chargerClassement();
+    });
 }
 
-btnOui.addEventListener('click', function() { repondre(1); });
-btnNon.addEventListener('click', function() { repondre(0); });
+btnOui.addEventListener('click', function () { repondre(1); });
+btnNon.addEventListener('click', function () { repondre(0); });
 
 
 // chargement du classement depuis GET /Top100
@@ -252,36 +267,36 @@ function chargerClassement() {
   const contenu = document.getElementById('leaderboardContenu');
 
   fetch('/Top100')
-  .then(function(reponse) { return reponse.json(); })
-  .then(function(donnees) {
-    contenu.innerHTML = '';
+    .then(function (reponse) { return reponse.json(); })
+    .then(function (donnees) {
+      contenu.innerHTML = '';
 
-    donnees.forEach(function(joueur) {
-      const tr = document.createElement('tr');
+      donnees.forEach(function (joueur) {
+        const tr = document.createElement('tr');
 
-      const tdRang = document.createElement('td');
-      tdRang.className = 'leaderboard-rang';
-      tdRang.innerText = donnees.indexOf(joueur) + 1;
-      tr.appendChild(tdRang);
+        const tdRang = document.createElement('td');
+        tdRang.className = 'leaderboard-rang';
+        tdRang.innerText = donnees.indexOf(joueur) + 1;
+        tr.appendChild(tdRang);
 
-      const tdNom = document.createElement('td');
-      tdNom.className = 'leaderboard-nom';
-      tdNom.innerText = joueur.login;
-      tr.appendChild(tdNom);
+        const tdNom = document.createElement('td');
+        tdNom.className = 'leaderboard-nom';
+        tdNom.innerText = joueur.login;
+        tr.appendChild(tdNom);
 
-      const tdPoints = document.createElement('td');
-      tdPoints.className = 'leaderboard-points';
-      tdPoints.innerText = joueur.points;
-      tr.appendChild(tdPoints);
+        const tdPoints = document.createElement('td');
+        tdPoints.className = 'leaderboard-points';
+        tdPoints.innerText = joueur.points;
+        tr.appendChild(tdPoints);
 
-      contenu.appendChild(tr);
+        contenu.appendChild(tr);
+      });
     });
-  });
 }
 
 
 // ouverture / fermeture du panneau classement
-leaderboardToggle.addEventListener('click', function() {
+leaderboardToggle.addEventListener('click', function () {
   if (classementOuvert == false) {
     classementOuvert = true;
     document.getElementById('leaderboard').style.transform = 'translateX(0)';
@@ -294,19 +309,7 @@ leaderboardToggle.addEventListener('click', function() {
 });
 
 window.onload = () => {
-  fetch('/check', {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + localStorage.getItem('tokenId')
-    }
-  })
-  .then(reponse => reponse.json())
-  .then(data => {
-    if (data.data === true) {
-      pseudoConnecte = localStorage.getItem('pseudo');
-      afficherApplication();
-    } else {
-      return;
-    }
-  });
+ 
+        afficherApplication();
+
 }
